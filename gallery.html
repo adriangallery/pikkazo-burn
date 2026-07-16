@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Freed — Cubist Souls</title>
+<meta name="description" content="Every Cubist Soul freed so far — one canvas burned for each. Live from Ethereum mainnet." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖼</text></svg>" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="The Freed — Cubist Souls" />
+<meta property="og:description" content="Every Cubist Soul freed so far — one canvas burned for each." />
+<meta property="og:image" content="https://cubistsouls.vercel.app/api/img?id=136" />
+<meta property="og:url" content="https://cubistsouls.vercel.app/gallery.html" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="The Freed — Cubist Souls" />
+<meta name="twitter:image" content="https://cubistsouls.vercel.app/api/img?id=136" />
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#0b0908; --smoke:#171311; --ash:#2a2320; --bone:#f3ece3;
+    --mute:#9c8f84; --ember:#ff5b18; --flame:#ffb020; --blood:#c22412;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--ink); color:var(--bone);
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased; min-height:100vh;
+    background-image:
+      radial-gradient(900px 500px at 50% -10%, rgba(255,91,24,.16), transparent 70%),
+      radial-gradient(600px 400px at 90% 110%, rgba(255,176,32,.07), transparent 70%);
+  }
+  a{color:var(--flame); text-decoration:none}
+  header{padding:30px 20px 6px; text-align:center}
+  .kicker{font-size:11px; letter-spacing:.42em; text-transform:uppercase; color:var(--ember); font-weight:700; margin-bottom:12px}
+  h1{
+    margin:0; font-size:clamp(40px,10vw,96px); line-height:.86;
+    font-weight:900; letter-spacing:-.04em; text-transform:uppercase;
+    background:linear-gradient(180deg,#fff5e8 0%,var(--flame) 45%,var(--ember) 72%,var(--blood) 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 6px 30px rgba(255,91,24,.35));
+  }
+  .sub{margin:14px auto 0; max-width:520px; color:var(--mute); font-size:14px; line-height:1.6}
+  .sub b{color:var(--bone); font-weight:600}
+  .count{margin:16px auto 0; text-align:center; color:var(--mute); font-size:13px; letter-spacing:.14em; text-transform:uppercase}
+  .count b{color:var(--flame); font-weight:800; letter-spacing:.04em}
+  .nav{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:18px auto 0}
+  .nav a{
+    display:inline-flex; align-items:center; gap:7px; background:var(--smoke); border:1px solid var(--ash);
+    padding:9px 15px; border-radius:999px; font-size:12px; color:var(--mute);
+    font-weight:700; letter-spacing:.03em; text-transform:uppercase; transition:.16s;
+  }
+  .nav a:hover{border-color:#5c4a40; color:var(--bone)}
+  .nav a b{color:var(--flame)}
+
+  main{max-width:1080px; margin:0 auto; padding:26px 20px 90px}
+  .grid{display:grid; gap:14px; grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .card{
+    position:relative; border-radius:14px; overflow:hidden;
+    background:var(--smoke); border:2px solid var(--ash); transition:.18s ease; aspect-ratio:1; display:block;
+  }
+  .card img{width:100%; height:100%; object-fit:cover; display:block; transition:.3s ease}
+  .card:hover{transform:translateY(-4px); border-color:#5c4a40}
+  .card:hover img{filter:saturate(1.15) contrast(1.05)}
+  .card .tag{
+    position:absolute; left:0; right:0; bottom:0; padding:16px 10px 8px;
+    background:linear-gradient(transparent,rgba(0,0,0,.86));
+    font-size:12px; font-weight:700; font-family:ui-monospace,Menlo,monospace;
+  }
+  .card.loading{background:linear-gradient(100deg,var(--smoke) 30%,#241d1a 50%,var(--smoke) 70%); background-size:220% 100%; animation:sweep 1.2s infinite}
+  .card.noimg img{display:none}
+  .card.noimg{display:flex; align-items:center; justify-content:center; color:#5f544c; font-size:26px}
+  .card.noimg::before{content:"🖼"}
+  .skeleton{aspect-ratio:1; border-radius:14px; background:linear-gradient(100deg,var(--smoke) 30%,#241d1a 50%,var(--smoke) 70%); background-size:220% 100%; animation:sweep 1.2s infinite}
+  @keyframes sweep{to{background-position:-220% 0}}
+  .note{text-align:center; color:var(--mute); font-size:14px; line-height:1.7; padding:60px 16px}
+  .note a{color:var(--flame)}
+  footer{text-align:center; color:#5f544c; font-size:12px; padding:0 20px 40px; line-height:1.8}
+  footer a{color:var(--flame)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kicker">Liberated on Ethereum · one bonfire each</div>
+  <h1>The<br />Freed</h1>
+  <p class="sub">Every <b>Cubist Soul</b> freed so far. Each one exists because a holder burned its original Pikkazo canvas — the number stayed, the art came back.</p>
+  <div class="count" id="count">◆ counting the freed…</div>
+  <nav class="nav">
+    <a href="/">🔥 <b>Burn</b> page</a>
+    <a href="/builder.html">🎨 <b>Soul Builder</b></a>
+    <a href="https://opensea.io/collection/cubist-souls" target="_blank" rel="noopener">◆ <b>OpenSea</b></a>
+  </nav>
+</header>
+
+<main>
+  <div id="content" class="grid"></div>
+</main>
+
+<footer>
+  Cubist Souls diamond <code>0x9252…8406</code> · Ethereum mainnet · <a href="https://opensea.io/collection/cubist-souls" target="_blank" rel="noopener">Collection on OpenSea</a>
+</footer>
+
+<script>
+const SOULS = "0x9252fdc0b3945203314ea1a9b8d64345bc868406";
+const DEPLOY_BLOCK = 25518546;
+const FALLBACK_RPC = "https://gateway.tenderly.co/public/mainnet";
+// Same reliable read RPC chain as the burn page — tried in order.
+const RPCS = [
+  FALLBACK_RPC,
+  "https://ethereum-rpc.publicnode.com",
+  "https://eth.llamarpc.com",
+];
+const IMG = id => `/api/img?id=${id}`;
+const ITEM = id => `https://opensea.io/item/ethereum/${SOULS}/${id}`;
+
+const $ = s => document.querySelector(s);
+const content = $("#content");
+
+async function reliableProvider(){
+  let lastErr;
+  for (const url of RPCS){
+    try { const p = new ethers.JsonRpcProvider(url); await p.getBlockNumber(); return p; }
+    catch (e){ lastErr = e; }
+  }
+  throw lastErr || new Error("No RPC endpoint reachable");
+}
+
+// Every Soul is minted from 0x0 on convert(). eth_getLogs Transfer(from=0)
+// → the freed token ids. Full range first; chunk as a fallback for RPCs that
+// cap block spans.
+async function freedIds(){
+  const transferTopic = ethers.id("Transfer(address,address,uint256)");
+  const zeroFrom = ethers.zeroPadValue("0x0000000000000000000000000000000000000000", 32);
+  const filter = { address: SOULS, topics: [transferTopic, zeroFrom] };
+  const rpc = await reliableProvider();
+  let logs;
+  try {
+    logs = await rpc.getLogs({ ...filter, fromBlock: DEPLOY_BLOCK, toBlock: "latest" });
+  } catch {
+    const latest = await rpc.getBlockNumber();
+    logs = [];
+    for (let from = DEPLOY_BLOCK; from <= latest; from += 9000){
+      const to = Math.min(from + 8999, latest);
+      logs = logs.concat(await rpc.getLogs({ ...filter, fromBlock: from, toBlock: to }));
+    }
+  }
+  return [...new Set(logs.map(l => Number(BigInt(l.topics[3]))))].sort((a, b) => a - b);
+}
+
+function showEmpty(msg){
+  content.className = "note";
+  content.innerHTML = msg;
+}
+
+async function load(){
+  content.className = "grid";
+  content.innerHTML = Array.from({ length: 8 }, () => `<div class="skeleton"></div>`).join("");
+
+  let ids;
+  try {
+    ids = await freedIds();
+  } catch (e){
+    $("#count").innerHTML = "";
+    return showEmpty(`Couldn't reach Ethereum right now. <a href="javascript:location.reload()">Try again</a> — or see the <a href="https://opensea.io/collection/cubist-souls" target="_blank" rel="noopener">collection on OpenSea</a>.`);
+  }
+
+  if (!ids.length){
+    $("#count").innerHTML = "◆ <b>0</b> souls freed — yet";
+    return showEmpty(`No souls freed yet. Be the first — <a href="/">burn a Pikkazo</a>.`);
+  }
+
+  $("#count").innerHTML = `◆ <b>${ids.length.toLocaleString("en-US")}</b> of 10,000 souls freed`;
+
+  content.className = "grid";
+  content.innerHTML = ids.map((id, i) => `
+    <a class="card loading" href="${ITEM(id)}" target="_blank" rel="noopener" data-id="${id}">
+      <img src="${IMG(id)}" loading="${i < 18 ? "eager" : "lazy"}" alt="Cubist Soul #${id}"
+           onload="this.parentNode.classList.remove('loading')"
+           onerror="this.parentNode.classList.remove('loading');this.parentNode.classList.add('noimg')" />
+      <div class="tag">#${id}</div>
+    </a>`).join("");
+}
+
+load();
+</script>
+</body>
+</html>

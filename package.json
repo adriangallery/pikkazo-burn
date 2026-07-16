@@ -1,0 +1,9 @@
+{
+  "name": "pikkazo-burn",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cubist Souls — burn page, Soul Builder + server-side render",
+  "dependencies": {
+    "sharp": "^0.33.5"
+  }
+}

@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Soul Builder — Cubist Souls</title>
+<meta name="description" content="Compose your own Cubist Soul from the recovered trait library — shuffle, tweak, download and share." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>" />
+<!-- Open Graph / Twitter -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Soul Builder — Cubist Souls" />
+<meta property="og:description" content="Compose your own Cubist Soul from the recovered trait library." />
+<meta property="og:image" content="https://cubistsouls.vercel.app/api/img?id=136" />
+<meta property="og:url" content="https://cubistsouls.vercel.app/builder.html" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Soul Builder — Cubist Souls" />
+<meta name="twitter:description" content="Compose your own Cubist Soul from the recovered trait library." />
+<meta name="twitter:image" content="https://cubistsouls.vercel.app/api/img?id=136" />
+<style>
+  :root{
+    --ink:#0b0908;
+    --smoke:#171311;
+    --ash:#2a2320;
+    --bone:#f3ece3;
+    --mute:#9c8f84;
+    --ember:#ff5b18;
+    --flame:#ffb020;
+    --blood:#c22412;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--ink); color:var(--bone);
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    background-image:
+      radial-gradient(900px 500px at 50% -10%, rgba(255,91,24,.16), transparent 70%),
+      radial-gradient(600px 400px at 90% 110%, rgba(255,176,32,.07), transparent 70%);
+  }
+  a{color:var(--flame); text-decoration:none}
+  header{padding:30px 20px 6px; text-align:center}
+  .kicker{
+    font-size:11px; letter-spacing:.42em; text-transform:uppercase;
+    color:var(--ember); font-weight:700; margin-bottom:12px;
+  }
+  h1{
+    margin:0; font-size:clamp(38px,9vw,84px); line-height:.86;
+    font-weight:900; letter-spacing:-.04em; text-transform:uppercase;
+    background:linear-gradient(180deg,#fff5e8 0%,var(--flame) 45%,var(--ember) 72%,var(--blood) 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 6px 30px rgba(255,91,24,.35));
+  }
+  .sub{margin:14px auto 0; max-width:520px; color:var(--mute); font-size:14px; line-height:1.6}
+  .sub b{color:var(--bone); font-weight:600}
+  .nav{
+    display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:18px auto 0;
+  }
+  .nav a{
+    display:inline-flex; align-items:center; gap:7px;
+    background:var(--smoke); border:1px solid var(--ash);
+    padding:9px 15px; border-radius:999px; font-size:12px; color:var(--mute);
+    font-weight:700; letter-spacing:.03em; text-transform:uppercase; transition:.16s;
+  }
+  .nav a:hover{border-color:#5c4a40; color:var(--bone)}
+  .nav a b{color:var(--flame)}
+
+  main{
+    max-width:980px; margin:0 auto; padding:22px 16px 120px;
+    display:grid; gap:26px; grid-template-columns:1fr;
+  }
+  @media(min-width:840px){
+    main{grid-template-columns:minmax(0,440px) minmax(0,1fr); align-items:start}
+  }
+
+  .stage{position:sticky; top:16px}
+  @media(max-width:839px){.stage{position:static}}
+  .canvas-wrap{
+    position:relative; width:100%; aspect-ratio:1; border-radius:16px; overflow:hidden;
+    background:var(--smoke); border:2px solid var(--ash);
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  canvas{width:100%; height:100%; display:block; image-rendering:auto}
+  .canvas-wrap.busy::after{
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(100deg,rgba(23,19,17,.0) 30%,rgba(255,176,32,.10) 50%,rgba(23,19,17,.0) 70%);
+    background-size:220% 100%; animation:sweep 1.1s infinite;
+  }
+  @keyframes sweep{to{background-position:-220% 0}}
+
+  .actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px}
+  button{
+    font:inherit; cursor:pointer; border:none; border-radius:999px;
+    padding:13px 20px; font-weight:800; letter-spacing:.04em;
+    text-transform:uppercase; font-size:12px; transition:.16s ease; flex:1 1 auto;
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn-shuffle{background:linear-gradient(180deg,var(--flame),var(--ember) 60%,var(--blood)); color:#fff; box-shadow:0 8px 22px rgba(255,91,24,.34); flex-basis:100%}
+  .btn-shuffle:hover{filter:brightness(1.08); transform:translateY(-1px)}
+  .btn-ghost{background:var(--smoke); border:1px solid var(--ash); color:var(--bone)}
+  .btn-ghost:hover{border-color:#5c4a40; transform:translateY(-1px)}
+  .traitline{
+    margin-top:12px; font-size:12px; color:var(--mute); line-height:1.7;
+    background:var(--smoke); border:1px solid var(--ash); border-radius:12px; padding:12px 14px;
+  }
+  .traitline .combo{color:var(--flame); font-family:ui-monospace,Menlo,monospace; font-size:11px; word-break:break-all}
+
+  .panel{min-width:0}
+  .acc{border:1px solid var(--ash); border-radius:14px; overflow:hidden; margin-bottom:10px; background:var(--smoke)}
+  .acc-head{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:14px 16px; cursor:pointer; user-select:none;
+  }
+  .acc-head:hover{background:#1d1815}
+  .acc-title{font-size:13px; font-weight:800; letter-spacing:.05em; text-transform:uppercase}
+  .acc-val{font-size:12px; color:var(--mute); font-weight:600; text-align:right; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .acc-chev{color:var(--mute); transition:.2s; flex:0 0 auto}
+  .acc.open .acc-chev{transform:rotate(90deg); color:var(--flame)}
+  .acc-body{display:none; padding:4px 12px 14px}
+  .acc.open .acc-body{display:block}
+  .thumbs{
+    display:grid; gap:8px;
+    grid-template-columns:repeat(auto-fill,minmax(74px,1fr));
+  }
+  .thumb{
+    position:relative; border-radius:10px; overflow:hidden; cursor:pointer;
+    background:var(--ink); border:2px solid var(--ash); aspect-ratio:1; transition:.15s;
+  }
+  .thumb img{width:100%; height:100%; object-fit:cover; display:block; background:var(--ink)}
+  .thumb:hover{border-color:#5c4a40; transform:translateY(-2px)}
+  .thumb.sel{border-color:var(--ember); box-shadow:0 0 0 3px rgba(255,91,24,.2)}
+  .thumb .tl{
+    position:absolute; left:0; right:0; bottom:0; padding:12px 6px 4px;
+    background:linear-gradient(transparent,rgba(0,0,0,.82)); font-size:9px; font-weight:700;
+    line-height:1.1; letter-spacing:.02em;
+  }
+  .loaderr{padding:40px 16px; text-align:center; color:var(--mute); font-size:14px}
+  footer{text-align:center; color:#5f544c; font-size:12px; padding:10px 20px 40px; line-height:1.8}
+  .toast{
+    position:fixed; top:18px; left:50%; transform:translateX(-50%);
+    background:var(--smoke); border:1px solid var(--ash); color:var(--bone);
+    padding:12px 18px; border-radius:12px; font-size:13px; z-index:40;
+    box-shadow:0 16px 44px rgba(0,0,0,.55); max-width:calc(100vw - 32px);
+  }
+  .toast a{color:var(--flame)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kicker">Recovered from 10,000 burned canvases</div>
+  <h1>Soul<br />Builder</h1>
+  <p class="sub">Compose a <b>Cubist Soul</b> from the recovered trait library. Shuffle, tweak, <b>download</b> and share. A free playground — the real Souls only come from <a href="/">burning a Pikkazo</a>.</p>
+  <nav class="nav">
+    <a href="/">🔥 <b>Burn</b> page</a>
+    <a href="/gallery.html">🖼 <b>The Freed</b></a>
+    <a href="https://opensea.io/collection/cubist-souls" target="_blank" rel="noopener">◆ <b>OpenSea</b></a>
+  </nav>
+</header>
+
+<main>
+  <section class="stage">
+    <div class="canvas-wrap busy" id="canvasWrap">
+      <canvas id="canvas" width="768" height="768"></canvas>
+    </div>
+    <div class="actions">
+      <button class="btn-shuffle" id="shuffle">🎲 Shuffle</button>
+      <button class="btn-ghost" id="download">⬇ Download</button>
+      <button class="btn-ghost" id="share">𝕏 Share</button>
+    </div>
+    <div class="traitline" id="traitline">Loading trait library…</div>
+  </section>
+
+  <section class="panel" id="panel">
+    <div class="loaderr" id="panelLoad">Loading trait library…</div>
+  </section>
+</main>
+
+<footer>
+  Cubist Souls · trait library recovered by variance-differencing 10,000 flattened canvases · <a href="https://opensea.io/collection/cubist-souls" target="_blank" rel="noopener">OpenSea</a>
+</footer>
+
+<script>
+const RAW = "https://raw.githubusercontent.com/adriangallery/cubist-souls-assets/main";
+const MANIFEST_URL = RAW + "/manifest.json";
+const OPENSEA = "https://opensea.io/collection/cubist-souls";
+const SHARE_BASE = "https://cubistsouls.vercel.app";
+
+const $ = s => document.querySelector(s);
+const canvas = $("#canvas"), ctx = canvas.getContext("2d");
+const canvasWrap = $("#canvasWrap");
+
+let manifest = null;
+let categories = [];      // manifest.categories, order = combo byte order
+let zOrder = [];          // draw order (category ids)
+let state = [];           // selected option index per category (categories order)
+const imgCache = new Map(); // url -> HTMLImageElement (loaded)
+
+function toast(html, ms = 4500){
+  document.querySelectorAll(".toast").forEach(t => t.remove());
+  const t = document.createElement("div");
+  t.className = "toast"; t.innerHTML = html;
+  document.body.appendChild(t);
+  if (ms) setTimeout(() => t.remove(), ms);
+}
+
+// mulberry32 — deterministic PRNG, ported from tigerbuilder / WTP random.ts
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+// combo = 16 hex chars, 1 byte per category in manifest.categories order,
+// value = option index within that category.
+function stateToHex(st){
+  return st.map(v => (v & 0xff).toString(16).padStart(2, "0")).join("");
+}
+function hexToState(hex){
+  if (typeof hex !== "string") return null;
+  hex = hex.trim().toLowerCase();
+  if (!/^[0-9a-f]{16}$/.test(hex)) return null;
+  const out = [];
+  for (let i = 0; i < categories.length; i++){
+    const b = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+    const n = categories[i].options.length;
+    out.push(b < n ? b : 0); // clamp out-of-bounds to first option
+  }
+  return out;
+}
+
+function optUrl(catIdx){
+  const cat = categories[catIdx];
+  return `${RAW}/${cat.dir}/${cat.options[state[catIdx]].file}`;
+}
+
+function loadImage(url){
+  if (imgCache.has(url)) return Promise.resolve(imgCache.get(url));
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous"; // needed so toBlob() isn't tainted
+    img.onload = () => { imgCache.set(url, img); resolve(img); };
+    img.onerror = () => reject(new Error("failed " + url));
+    img.src = url;
+  });
+}
+
+let drawToken = 0;
+async function render(){
+  const my = ++drawToken;
+  canvasWrap.classList.add("busy");
+  // Build the ordered list of urls following zOrder.
+  const jobs = zOrder.map(id => {
+    const catIdx = categories.findIndex(c => c.id === id);
+    return { catIdx, url: optUrl(catIdx) };
+  });
+  try {
+    const imgs = await Promise.all(jobs.map(j => loadImage(j.url)));
+    if (my !== drawToken) return; // superseded by a newer render
+    ctx.clearRect(0, 0, 768, 768);
+    ctx.fillStyle = "#0b0908"; // ink — opaque backdrop behind any layer gaps
+    ctx.fillRect(0, 0, 768, 768);
+    imgs.forEach(img => ctx.drawImage(img, 0, 0, 768, 768));
+    canvasWrap.classList.remove("busy");
+  } catch (e){
+    if (my !== drawToken) return;
+    canvasWrap.classList.remove("busy");
+    toast("Some layers failed to load — try Shuffle again.");
+  }
+  updateTraitline();
+  syncSelections();
+  syncUrl();
+}
+
+function updateTraitline(){
+  const hex = stateToHex(state);
+  const parts = categories.map(c => {
+    const o = c.options[state[categories.indexOf(c)]];
+    return `<b style="color:var(--bone)">${c.label}:</b> ${o.label}`;
+  });
+  $("#traitline").innerHTML =
+    parts.join(" &nbsp;·&nbsp; ") +
+    `<div class="combo" style="margin-top:8px">combo ${hex}</div>`;
+}
+
+function syncUrl(){
+  const hex = stateToHex(state);
+  const url = new URL(location.href);
+  url.searchParams.set("combo", hex);
+  history.replaceState(null, "", url);
+}
+
+// Reflect current state into any rendered thumbnails / accordion values.
+function syncSelections(){
+  categories.forEach((c, ci) => {
+    const sec = document.querySelector(`.acc[data-cat="${ci}"]`);
+    if (!sec) return;
+    const val = sec.querySelector(".acc-val");
+    if (val) val.textContent = c.options[state[ci]].label;
+    sec.querySelectorAll(".thumb").forEach(t => {
+      t.classList.toggle("sel", Number(t.dataset.opt) === state[ci]);
+    });
+  });
+}
+
+function shuffle(seed){
+  const rnd = mulberry32(seed >>> 0);
+  state = categories.map(c => Math.floor(rnd() * c.options.length));
+  render();
+}
+
+// Lazily populate thumbnails when a section opens (avoids loading all 145 at once).
+function populateThumbs(sec, ci){
+  const grid = sec.querySelector(".thumbs");
+  if (grid.dataset.filled) return;
+  grid.dataset.filled = "1";
+  const cat = categories[ci];
+  grid.innerHTML = cat.options.map((o, oi) => `
+    <div class="thumb${state[ci] === oi ? " sel" : ""}" data-opt="${oi}" title="${o.label}">
+      <img loading="lazy" alt="${o.label}"
+           src="${RAW}/${cat.dir}/${o.file}" />
+      <div class="tl">${o.label}</div>
+    </div>`).join("");
+  grid.querySelectorAll(".thumb").forEach(t => {
+    t.onclick = () => {
+      state[ci] = Number(t.dataset.opt);
+      render();
+    };
+  });
+}
+
+function buildAccordion(){
+  const panel = $("#panel");
+  panel.innerHTML = categories.map((c, ci) => `
+    <div class="acc" data-cat="${ci}">
+      <div class="acc-head">
+        <span class="acc-title">${c.label}</span>
+        <span class="acc-val">${c.options[state[ci]].label}</span>
+        <svg class="acc-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 6l6 6-6 6"/></svg>
+      </div>
+      <div class="acc-body"><div class="thumbs"></div></div>
+    </div>`).join("");
+
+  panel.querySelectorAll(".acc").forEach(sec => {
+    const ci = Number(sec.dataset.cat);
+    sec.querySelector(".acc-head").onclick = () => {
+      const wasOpen = sec.classList.contains("open");
+      // single-open accordion
+      panel.querySelectorAll(".acc.open").forEach(o => o.classList.remove("open"));
+      if (!wasOpen){ sec.classList.add("open"); populateThumbs(sec, ci); }
+    };
+  });
+  // open the first section by default
+  const first = panel.querySelector(".acc");
+  if (first){ first.classList.add("open"); populateThumbs(first, 0); }
+}
+
+async function init(){
+  try {
+    const r = await fetch(MANIFEST_URL);
+    if (!r.ok) throw new Error("manifest " + r.status);
+    manifest = await r.json();
+  } catch (e){
+    $("#panelLoad").textContent = "Couldn't load the trait library. Refresh to retry.";
+    $("#traitline").textContent = "Trait library unavailable.";
+    return;
+  }
+  categories = manifest.categories;
+  zOrder = manifest.zOrder;
+
+  // Preload from ?combo=, else random.
+  const params = new URLSearchParams(location.search);
+  const pre = hexToState(params.get("combo"));
+  if (pre){ state = pre; }
+  else { state = categories.map(() => 0); }
+
+  buildAccordion();
+  if (pre) render();
+  else shuffle((Date.now() ^ (Math.random() * 1e9)) | 0);
+}
+
+$("#shuffle").onclick = () => shuffle((Date.now() ^ (Math.random() * 1e9)) | 0);
+
+$("#download").onclick = () => {
+  const hex = stateToHex(state);
+  canvas.toBlob(blob => {
+    if (!blob) return toast("Couldn't export — try again.");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `cubist-soul-${hex}.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }, "image/png");
+};
+
+$("#share").onclick = () => {
+  const hex = stateToHex(state);
+  const text = "I built a Cubist Soul 🎨🔥 Compose your own from the recovered trait library.";
+  const url = `${SHARE_BASE}/api/share?combo=${hex}`;
+  const intent = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+  window.open(intent, "_blank", "noopener");
+};
+
+init();
+</script>
+</body>
+</html>
