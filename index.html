@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BURN ART — Pikkazo</title>
+<meta name="description" content="Burn a Pikkazo canvas and get its Cubist Soul — same number, original art recovered — minted to your wallet in the Cubist Souls collection." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>" />
+<!-- Open Graph / Twitter -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Burn Art — free your Cubist Soul" />
+<meta property="og:description" content="Burn a Pikkazo canvas and you get its Cubist Soul — same number, original art recovered — minted straight to your wallet on Ethereum." />
+<meta property="og:image" content="https://cubistsouls.vercel.app/api/img?id=136" />
+<meta property="og:url" content="https://cubistsouls.vercel.app" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Burn Art — free your Cubist Soul" />
+<meta name="twitter:description" content="Burn a Pikkazo canvas and you get its Cubist Soul — same number, original art recovered." />
+<meta name="twitter:image" content="https://cubistsouls.vercel.app/api/img?id=136" />
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#0b0908;
+    --smoke:#171311;
+    --ash:#2a2320;
+    --bone:#f3ece3;
+    --mute:#9c8f84;
+    --ember:#ff5b18;
+    --flame:#ffb020;
+    --blood:#c22412;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--ink); color:var(--bone);
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    background-image:
+      radial-gradient(900px 500px at 50% -10%, rgba(255,91,24,.16), transparent 70%),
+      radial-gradient(600px 400px at 90% 110%, rgba(255,176,32,.07), transparent 70%);
+  }
+  header{
+    padding:34px 20px 10px; text-align:center;
+  }
+  .kicker{
+    font-size:11px; letter-spacing:.42em; text-transform:uppercase;
+    color:var(--ember); font-weight:700; margin-bottom:14px;
+  }
+  h1{
+    margin:0; font-size:clamp(48px,12vw,124px); line-height:.86;
+    font-weight:900; letter-spacing:-.04em; text-transform:uppercase;
+    background:linear-gradient(180deg,#fff5e8 0%,var(--flame) 45%,var(--ember) 72%,var(--blood) 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 6px 30px rgba(255,91,24,.35));
+  }
+  .sub{
+    margin:16px auto 0; max-width:520px; color:var(--mute);
+    font-size:15px; line-height:1.6;
+  }
+  .sub b{color:var(--bone); font-weight:600}
+  .sub a{color:var(--flame); text-decoration:none; border-bottom:1px solid rgba(255,176,32,.45)}
+  main{max-width:1080px; margin:0 auto; padding:28px 20px 90px}
+
+  .gets{
+    display:flex; gap:10px; justify-content:center; flex-wrap:wrap;
+    max-width:840px; margin:22px auto 0;
+  }
+  .gets span{
+    display:inline-flex; align-items:center; gap:8px;
+    background:var(--smoke); border:1px solid var(--ash);
+    padding:10px 16px; border-radius:999px; font-size:13px; color:var(--mute);
+  }
+  .gets b{color:var(--bone); font-weight:700}
+  .gets a{color:var(--flame); text-decoration:none}
+
+  .freed{
+    margin:18px auto 0; text-align:center; color:var(--mute);
+    font-size:13px; letter-spacing:.14em; text-transform:uppercase;
+  }
+  .freed b{color:var(--flame); font-weight:800; letter-spacing:.04em}
+
+  .bar{
+    display:flex; gap:12px; align-items:center; justify-content:center;
+    flex-wrap:wrap; margin:26px 0 34px;
+  }
+  button{
+    font:inherit; cursor:pointer; border:none; border-radius:999px;
+    padding:14px 26px; font-weight:800; letter-spacing:.04em;
+    text-transform:uppercase; font-size:13px; transition:.16s ease;
+  }
+  .btn-connect{
+    background:var(--bone); color:var(--ink);
+  }
+  .btn-connect:hover{transform:translateY(-2px); box-shadow:0 10px 26px rgba(243,236,227,.16)}
+  .pill{
+    display:inline-flex; align-items:center; gap:9px;
+    background:var(--smoke); border:1px solid var(--ash);
+    padding:11px 18px; border-radius:999px; font-size:13px; color:var(--mute);
+  }
+  .pill b{color:var(--bone); font-weight:600; font-family:ui-monospace,Menlo,monospace}
+  .dot{width:7px;height:7px;border-radius:50%;background:#37d67a;box-shadow:0 0 10px #37d67a}
+
+  .grid{
+    display:grid; gap:14px;
+    grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  }
+  .card{
+    position:relative; border-radius:14px; overflow:hidden; cursor:pointer;
+    background:var(--smoke); border:2px solid var(--ash);
+    transition:.18s ease; aspect-ratio:1;
+  }
+  .card img{width:100%;height:100%;object-fit:cover;display:block;transition:.3s ease}
+  .card:hover{transform:translateY(-4px); border-color:#5c4a40}
+  .card:hover img{filter:saturate(1.15) contrast(1.05)}
+  .card.sel{
+    border-color:var(--ember);
+    box-shadow:0 0 0 4px rgba(255,91,24,.18), 0 14px 40px rgba(255,91,24,.28);
+    transform:translateY(-4px);
+  }
+  .card.sel::after{
+    content:"🔥"; position:absolute; top:8px; right:8px; font-size:20px;
+    filter:drop-shadow(0 2px 6px rgba(0,0,0,.6));
+    animation:flick .7s ease-in-out infinite alternate;
+  }
+  @keyframes flick{from{transform:scale(1) rotate(-4deg)}to{transform:scale(1.16) rotate(5deg)}}
+  .card .tag{
+    position:absolute; left:0; right:0; bottom:0; padding:16px 10px 8px;
+    background:linear-gradient(transparent,rgba(0,0,0,.86));
+    font-size:12px; font-weight:700; font-family:ui-monospace,Menlo,monospace;
+  }
+  .card.gone{pointer-events:none; opacity:.35; filter:grayscale(1) brightness(.6)}
+  .card.gone::after{
+    content:"☠"; position:absolute; top:8px; right:8px; font-size:20px;
+    filter:drop-shadow(0 2px 6px rgba(0,0,0,.6));
+  }
+  .card.gone .tag{color:#8a7d72}
+  .card.loading{
+    background:linear-gradient(100deg,var(--smoke) 30%,#241d1a 50%,var(--smoke) 70%);
+    background-size:220% 100%; animation:sweep 1.2s infinite;
+  }
+  .card.noimg img{display:none}
+  .card.noimg{display:flex; align-items:center; justify-content:center; color:#5f544c; font-size:26px}
+  .card.noimg::before{content:"🖼"}
+
+  .dock{
+    position:fixed; left:50%; bottom:22px; transform:translateX(-50%) translateY(160%);
+    display:flex; align-items:center; gap:16px; z-index:20;
+    background:rgba(23,19,17,.9); backdrop-filter:blur(14px);
+    border:1px solid var(--ash); border-radius:18px; padding:12px 14px 12px 12px;
+    box-shadow:0 24px 60px rgba(0,0,0,.6);
+    transition:transform .28s cubic-bezier(.2,.9,.3,1.2);
+    max-width:calc(100vw - 32px);
+  }
+  .dock.up{transform:translateX(-50%) translateY(0)}
+  .dock img{width:52px;height:52px;border-radius:10px;object-fit:cover;flex:0 0 auto}
+  .dock .meta{font-size:12px;color:var(--mute);line-height:1.45;min-width:0}
+  .dock .meta b{display:block;color:var(--bone);font-size:15px;font-weight:800}
+  .btn-burn{
+    background:linear-gradient(180deg,var(--flame),var(--ember) 55%,var(--blood));
+    color:#fff; padding:16px 30px; font-size:14px; white-space:nowrap;
+    box-shadow:0 8px 26px rgba(255,91,24,.4);
+  }
+  .btn-burn:hover{filter:brightness(1.1); transform:translateY(-1px)}
+  .btn-burn:disabled{opacity:.55; cursor:wait; transform:none}
+
+  .note{
+    text-align:center; color:var(--mute); font-size:14px; line-height:1.7;
+    padding:52px 16px;
+  }
+  .note a{color:var(--flame)}
+  .warn{
+    margin:0 auto 26px; max-width:640px; text-align:center;
+    border:1px dashed #4a3a32; border-radius:12px; padding:12px 16px;
+    color:var(--mute); font-size:13px; line-height:1.6;
+  }
+  .warn b{color:var(--flame)}
+  .toast{
+    position:fixed; top:18px; left:50%; transform:translateX(-50%);
+    background:var(--smoke); border:1px solid var(--ash); color:var(--bone);
+    padding:13px 20px; border-radius:12px; font-size:14px; z-index:40;
+    box-shadow:0 16px 44px rgba(0,0,0,.55); max-width:calc(100vw - 32px);
+  }
+  .toast a{color:var(--flame)}
+  .skeleton{
+    aspect-ratio:1; border-radius:14px;
+    background:linear-gradient(100deg,var(--smoke) 30%,#241d1a 50%,var(--smoke) 70%);
+    background-size:220% 100%; animation:sweep 1.2s infinite;
+  }
+  @keyframes sweep{to{background-position:-220% 0}}
+  footer{
+    text-align:center; color:#5f544c; font-size:12px; padding:0 20px 40px; line-height:1.8;
+  }
+  footer code{font-family:ui-monospace,Menlo,monospace}
+  footer a{color:var(--flame); text-decoration:none}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kicker">Redefining cubism · one bonfire at a time</div>
+  <h1>Burn<br />Art</h1>
+  <p class="sub">Burn a <b>Pikkazo</b> canvas and you automatically get its <b>Cubist Soul</b> — same number, its original art recovered — minted straight to your wallet in the new <a href="https://opensea.io/collection/cubist-souls" target="_blank" rel="noopener">Cubist Souls</a> collection on OpenSea.</p>
+  <div class="gets">
+    <span>🔥 <b>Burn</b> your Pikkazo</span>
+    <span>✨ <b>Get</b> its Cubist Soul — same #, art recovered</span>
+    <span>🖼 <b>Own</b> it on <a href="https://opensea.io/collection/cubist-souls" target="_blank" rel="noopener">OpenSea</a></span>
+  </div>
+  <div class="freed" id="freed" hidden>◆ <b id="freedN"></b> of 10,000 souls freed</div>
+</header>
+
+<main>
+  <div class="bar" id="bar">
+    <button class="btn-connect" id="connect">Connect Wallet</button>
+  </div>
+
+  <div class="warn">
+    <b>This is real.</b> Burning destroys the Pikkazo forever on Ethereum mainnet — and mints you its Cubist Soul (same tokenId). No undo, no refund, no takebacks.<br />
+    You only ever approve the <b>exact pieces you select</b> — never your whole collection.
+  </div>
+
+  <div id="content" class="note">Connect your wallet to see your collection.</div>
+</main>
+
+<div class="dock" id="dock">
+  <img id="dock-img" alt="" />
+  <div class="meta"><b id="dock-name">Pikkazo</b><span id="dock-sub">Ready for the flames</span></div>
+  <button class="btn-burn" id="burn">🔥 Burn it</button>
+</div>
+
+<footer>
+  Pikkazo <code>0x6478…484e</code> → <a href="https://opensea.io/collection/cubist-souls" target="_blank" rel="noopener">Cubist Souls</a> diamond · Ethereum mainnet · only you can burn what you own.
+</footer>
+
+<script>
+const CONTRACT   = "0x6478b94dfa32f3eab600970d04b34615ee97484e";
+// Cubist Souls diamond: burning now frees a Soul (same tokenId) in the new collection
+const SOULS      = "0x9252fdc0b3945203314ea1a9b8d64345bc868406";
+const MULTICALL3 = "0xcA11bde05977b3631167028862bE2a173976CA11";
+const FALLBACK_RPC = "https://gateway.tenderly.co/public/mainnet";
+// Reliable read RPCs, tried in order. The whole burn flow (candidateIds,
+// ownership + approval reads) goes through these, so one gateway outage can't
+// kill approvals mid-burn.
+const RPCS = [
+  FALLBACK_RPC,
+  "https://ethereum-rpc.publicnode.com",
+  "https://eth.llamarpc.com",
+];
+const DEPLOY_BLOCK = 25424406;
+
+// First RPC that answers a cheap probe, trying each in order.
+async function reliableProvider() {
+  let lastErr;
+  for (const url of RPCS) {
+    try {
+      const p = new ethers.JsonRpcProvider(url);
+      await p.getBlockNumber(); // probe — fall through to the next on failure
+      return p;
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr || new Error("No RPC endpoint reachable");
+}
+// Served through our own edge-cached proxy — public IPFS gateways 504 when a
+// wallet with hundreds of pieces requests them all at once.
+const IMG = id => `/api/img?id=${id}`;
+
+const NFT_ABI = [
+  "function burn(uint256 tokenId)",
+  "function ownerOf(uint256 tokenId) view returns (address)",
+  "function getApproved(uint256 tokenId) view returns (address)",
+  "function isApprovedForAll(address owner, address operator) view returns (bool)",
+  "function approve(address to, uint256 tokenId)"
+];
+const SOULS_ABI = [
+  "function convert(uint256[] tokenIds)",
+  "function ownerOf(uint256 tokenId) view returns (address)"
+];
+const MC_ABI = [
+  "function tryAggregate(bool requireSuccess, (address target, bytes callData)[] calls) view returns ((bool success, bytes returnData)[])"
+];
+
+const $ = s => document.querySelector(s);
+const content = $("#content"), dock = $("#dock");
+const MAX_PER_BURN = 20; // contract allows 50; 20 keeps the tx ~2M gas
+let signer, account;
+const selected = new Set();
+
+function toast(html, ms = 7000) {
+  document.querySelectorAll(".toast").forEach(t => t.remove());
+  const t = document.createElement("div");
+  t.className = "toast";
+  t.innerHTML = html;
+  document.body.appendChild(t);
+  if (ms) setTimeout(() => t.remove(), ms);
+  return t;
+}
+
+$("#connect").onclick = connect;
+
+async function connect() {
+  if (!window.ethereum) return toast("No wallet found — install MetaMask or Rabby.");
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+
+    // Pikkazo lives on Ethereum mainnet.
+    const net = await provider.getNetwork();
+    if (net.chainId !== 1n) {
+      try {
+        await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x1" }] });
+      } catch {
+        return toast("Please switch your wallet to Ethereum mainnet.");
+      }
+    }
+
+    signer = await new ethers.BrowserProvider(window.ethereum).getSigner();
+    account = await signer.getAddress();
+    $("#bar").innerHTML =
+      `<span class="pill"><span class="dot"></span>${account.slice(0, 6)}…${account.slice(-4)}</span>` +
+      `<span class="pill">Your Pikkazos: <b id="count">…</b></span>`;
+    await loadTokens();
+  } catch (e) {
+    toast(`Connection failed: ${e.shortMessage || e.message}`);
+  }
+}
+
+// Find every token that ever landed in this wallet, then confirm it is still there.
+async function loadTokens() {
+  content.className = "grid";
+  content.innerHTML = Array.from({ length: 8 }, () => `<div class="skeleton"></div>`).join("");
+
+  let ids;
+  try {
+    ids = await candidateIds();
+  } catch (e) {
+    content.className = "note";
+    content.innerHTML = `Couldn't read the chain: ${e.shortMessage || e.message}`;
+    return;
+  }
+
+  const { owned, burned, freed } = await scanCollection(ids);
+  const countEl = $("#count");
+  if (countEl) countEl.textContent = owned.length;
+
+  if (!owned.length && !burned.length) {
+    content.className = "note";
+    content.innerHTML = "No Pikkazos in this wallet. Nothing to burn — go buy some cubism first.";
+    return;
+  }
+
+  // live canvases first (numeric order), then the graveyard
+  const cards = owned.map(id => ({ id, gone: false }))
+    .concat(burned.map(id => ({ id, gone: true })));
+
+  content.className = "grid";
+  content.innerHTML = cards.map(({ id, gone }, i) => `
+    <div class="card loading${gone ? " gone" : ""}" data-id="${id}">
+      <img src="${IMG(id)}" loading="${i < 18 ? "eager" : "lazy"}" alt="Pikkazo #${id}"
+           onload="this.parentNode.classList.remove('loading')"
+           onerror="this.parentNode.classList.remove('loading');this.parentNode.classList.add('noimg')" />
+      <div class="tag">#${id}${gone ? (freed.has(id) ? " · soul freed" : " · ashes") : ""}</div>
+    </div>`).join("");
+
+  content.querySelectorAll(".card:not(.gone)").forEach(card => {
+    card.onclick = () => select(card);
+  });
+}
+
+// eth_getLogs of incoming Transfers. The wallet's own RPC caps block ranges,
+// so try the public gateway first and chunk as a fallback.
+async function candidateIds() {
+  const padded = ethers.zeroPadValue(account, 32);
+  const transferTopic = ethers.id("Transfer(address,address,uint256)");
+  const filter = { address: CONTRACT, topics: [transferTopic, null, padded] };
+
+  try {
+    const rpc = await reliableProvider();
+    const logs = await rpc.getLogs({ ...filter, fromBlock: DEPLOY_BLOCK, toBlock: "latest" });
+    return [...new Set(logs.map(l => Number(BigInt(l.topics[3]))))].sort((a, b) => a - b);
+  } catch {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const latest = await provider.getBlockNumber();
+    const ids = new Set();
+    for (let from = DEPLOY_BLOCK; from <= latest; from += 9000) {
+      const to = Math.min(from + 8999, latest);
+      const logs = await provider.getLogs({ ...filter, fromBlock: from, toBlock: to });
+      logs.forEach(l => ids.add(Number(BigInt(l.topics[3]))));
+    }
+    return [...ids].sort((a, b) => a - b);
+  }
+}
+
+// Batched Multicall3 reads instead of one ownerOf call per token.
+// The public gateway rejects oversized eth_calls, so keep batches small
+// and split further if one still fails.
+const BATCH = 100;
+
+async function multicallOwners(target, ids) {
+  const rpc = await reliableProvider();
+  const nft = new ethers.Interface(NFT_ABI);
+  const mc = new ethers.Contract(MULTICALL3, MC_ABI, rpc);
+  const out = new Map(); // id -> owner address, or null if ownerOf reverted (burned/nonexistent)
+
+  const scan = async chunk => {
+    try {
+      const calls = chunk.map(id => ({ target, callData: nft.encodeFunctionData("ownerOf", [id]) }));
+      const res = await mc.tryAggregate(false, calls);
+      res.forEach(({ success, returnData }, j) => {
+        if (!success) { out.set(chunk[j], null); return; }
+        out.set(chunk[j], nft.decodeFunctionResult("ownerOf", returnData)[0].toLowerCase());
+      });
+    } catch (e) {
+      if (chunk.length === 1) throw e;
+      const mid = Math.ceil(chunk.length / 2);
+      await scan(chunk.slice(0, mid));
+      await scan(chunk.slice(mid));
+    }
+  };
+
+  for (let i = 0; i < ids.length; i += BATCH) {
+    await scan(ids.slice(i, i + BATCH));
+  }
+  return out;
+}
+
+// Classify every token that ever touched this wallet, straight from the chain
+// (persists across sessions and devices, no local state):
+//  - owned:  still yours, burnable
+//  - freed:  burned via convert — its Cubist Soul exists
+//  - ashes:  burned before the Souls contract existed (plain burn)
+async function scanCollection(ids) {
+  const pikkazoOwners = await multicallOwners(CONTRACT, ids);
+  const owned = [], burned = [];
+  ids.forEach(id => {
+    const o = pikkazoOwners.get(id);
+    if (o === null) burned.push(id); // ownerOf reverted: canvas destroyed
+    else if (o === account.toLowerCase()) owned.push(id);
+    // owned by someone else (sold/transferred) -> not shown
+  });
+
+  const freed = new Set();
+  if (burned.length) {
+    const soulOwners = await multicallOwners(SOULS, burned);
+    burned.forEach(id => { if (soulOwners.get(id)) freed.add(id); });
+  }
+  return { owned: owned.sort((a, b) => a - b), burned: burned.sort((a, b) => a - b), freed };
+}
+
+// Which of the selected tokens still need approval for the Souls diamond to burn
+// them. Read from the reliable gateway (not the wallet RPC, which can return
+// stale/false and re-prompt) so it's accurate and idempotent: pieces already
+// approved — or a pre-existing all-collection approval — are skipped.
+async function approvalsNeeded(ids) {
+  const rpc = await reliableProvider();
+  const nft = new ethers.Interface(NFT_ABI);
+  const mc = new ethers.Contract(MULTICALL3, MC_ABI, rpc);
+  const calls = [
+    { target: CONTRACT, callData: nft.encodeFunctionData("isApprovedForAll", [account, SOULS]) },
+    ...ids.map(id => ({ target: CONTRACT, callData: nft.encodeFunctionData("getApproved", [id]) })),
+  ];
+  const res = await mc.tryAggregate(false, calls);
+  if (res[0].success && nft.decodeFunctionResult("isApprovedForAll", res[0].returnData)[0]) return [];
+  const soul = SOULS.toLowerCase();
+  const need = [];
+  ids.forEach((id, i) => {
+    const r = res[i + 1];
+    const appr = r.success ? nft.decodeFunctionResult("getApproved", r.returnData)[0].toLowerCase() : null;
+    if (appr !== soul) need.push(id);
+  });
+  return need;
+}
+
+function select(card) {
+  const id = card.dataset.id;
+  if (selected.has(id)) {
+    selected.delete(id);
+    card.classList.remove("sel");
+  } else {
+    if (selected.size >= MAX_PER_BURN) {
+      toast(`Max ${MAX_PER_BURN} per burn — light this batch first, then pick more.`);
+      return;
+    }
+    selected.add(id);
+    card.classList.add("sel");
+  }
+  updateDock();
+}
+
+function updateDock() {
+  const n = selected.size;
+  if (n === 0) { dock.classList.remove("up"); return; }
+  const ids = [...selected];
+  $("#dock-img").src = IMG(ids[ids.length - 1]);
+  $("#dock-name").textContent = n === 1 ? `Pikkazo #${ids[0]}` : `${n} canvases selected`;
+  $("#dock-sub").textContent = n === 1 ? "Ready for the flames" : `#${ids.slice(0, 4).join(", #")}${n > 4 ? "…" : ""} · max ${MAX_PER_BURN}`;
+  $("#burn").textContent = n === 1 ? "🔥 Burn it" : `🔥 Burn ${n}`;
+  dock.classList.add("up");
+}
+
+$("#burn").onclick = async () => {
+  if (!selected.size || !signer) return;
+  const ids = [...selected].map(Number).sort((a, b) => a - b);
+  const btn = $("#burn");
+  btn.disabled = true;
+
+  try {
+    const pikkazo = new ethers.Contract(CONTRACT, NFT_ABI, signer);
+
+    // Approve ONLY the pieces being burned — never the whole collection. Skips
+    // anything already approved so it never asks twice for the same piece.
+    const need = await approvalsNeeded(ids);
+    for (let i = 0; i < need.length; i++) {
+      btn.textContent = need.length === 1 ? "Approve in wallet…" : `Approve ${i + 1}/${need.length}…`;
+      toast(`You approve only the piece${need.length > 1 ? "s" : ""} you selected — never your whole collection.${need.length > 1 ? ` (${i + 1}/${need.length})` : ""}`, 0);
+      const txA = await pikkazo.approve(SOULS, need[i]);
+      await txA.wait();
+    }
+
+    btn.textContent = "Confirm in wallet…";
+    const souls = new ethers.Contract(SOULS, SOULS_ABI, signer);
+    const tx = await souls.convert(ids);
+    btn.textContent = "Burning…";
+    const label = ids.length === 1 ? `Pikkazo #${ids[0]}` : `${ids.length} canvases`;
+    toast(`🔥 Burning ${label} — <a href="https://etherscan.io/tx/${tx.hash}" target="_blank" rel="noopener">watch it on Etherscan</a>`, 0);
+
+    await tx.wait();
+
+    ids.forEach(id => {
+      const card = content.querySelector(`.card[data-id="${id}"]`);
+      if (card) {
+        card.classList.add("gone");
+        card.classList.remove("sel");
+        card.onclick = null;
+        const tag = card.querySelector(".tag");
+        if (tag) tag.textContent = `#${id} · soul freed`;
+      }
+    });
+    const countEl = $("#count");
+    if (countEl) countEl.textContent = Math.max(0, Number(countEl.textContent) - ids.length);
+
+    selected.clear();
+    dock.classList.remove("up");
+    const soulsUrl = ids.length === 1
+      ? `https://opensea.io/item/ethereum/${SOULS}/${ids[0]}`
+      : `https://opensea.io/collection/cubist-souls`;
+    const soulsLink = ids.length === 1
+      ? `<a href="${soulsUrl}" target="_blank" rel="noopener">See your Cubist Soul on OpenSea</a>`
+      : `<a href="${soulsUrl}" target="_blank" rel="noopener">See the Cubist Souls collection</a>`;
+    const shareText = ids.length === 1
+      ? `I burned Pikkazo #${ids[0]} and freed its Cubist Soul 🔥 Same number, art recovered.`
+      : `I burned ${ids.length} Pikkazos and freed their Cubist Souls 🔥 Same numbers, art recovered.`;
+    const shareUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(soulsUrl)}`;
+    toast(
+      `☠️ ${ids.length === 1 ? `The canvas is ash — <b>Cubist Soul #${ids[0]}</b> is yours` : `${ids.length} canvases are ash — their <b>Cubist Souls</b> are yours`}. ` +
+      soulsLink +
+      ` · <a href="${shareUrl}" target="_blank" rel="noopener">Share on X</a>` +
+      ` · <a href="https://etherscan.io/tx/${tx.hash}" target="_blank" rel="noopener">Proof</a>`,
+      0
+    );
+  } catch (e) {
+    const msg = e.shortMessage || e.message || "Transaction failed";
+    toast(msg.includes("rejected") ? "Chickened out. The art lives." : `Failed: ${msg}`);
+  } finally {
+    btn.disabled = false;
+    updateDock();
+    if (!selected.size) btn.textContent = "🔥 Burn it";
+  }
+};
+
+if (window.ethereum) {
+  window.ethereum.on?.("accountsChanged", () => location.reload());
+  window.ethereum.on?.("chainChanged", () => location.reload());
+}
+
+// Discreet "X of 10,000 souls freed" — reads totalSupply() with no wallet.
+// If every RPC is down, stay silent (the element is hidden by default).
+async function loadFreedCount() {
+  try {
+    const rpc = await reliableProvider();
+    const souls = new ethers.Contract(SOULS, ["function totalSupply() view returns (uint256)"], rpc);
+    const n = await souls.totalSupply();
+    $("#freedN").textContent = Number(n).toLocaleString("en-US");
+    $("#freed").hidden = false;
+  } catch { /* silent */ }
+}
+loadFreedCount();
+</script>
+</body>
+</html>
