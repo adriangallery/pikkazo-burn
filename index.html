@@ -168,6 +168,19 @@
   .btn-burn:hover{filter:brightness(1.1); transform:translateY(-1px)}
   .btn-burn:disabled{opacity:.55; cursor:wait; transform:none}
 
+  .tools{display:flex; gap:10px; justify-content:center; margin:0 0 18px; flex-wrap:wrap}
+  .btn-ghost{background:var(--smoke); color:var(--bone); border:1px solid var(--ash); padding:10px 18px; font-size:12px}
+  .btn-ghost:hover{border-color:#5c4a40}
+  .overlay{position:fixed; inset:0; background:rgba(6,5,4,.72); backdrop-filter:blur(4px); z-index:60; display:flex; align-items:center; justify-content:center; padding:20px}
+  .modal{background:var(--smoke); border:1px solid var(--ash); border-radius:18px; padding:24px; max-width:440px; width:100%; box-shadow:0 30px 80px rgba(0,0,0,.6)}
+  .modal h3{margin:0 0 6px; font-size:19px; color:var(--bone)}
+  .modal p{margin:0 0 18px; color:var(--mute); font-size:14px; line-height:1.5}
+  .modal button{display:flex; flex-direction:column; align-items:flex-start; gap:3px; width:100%; text-align:left; text-transform:none; letter-spacing:0; margin-bottom:10px; padding:14px 16px; border-radius:12px; font-size:14px; font-weight:800; background:var(--ash); color:var(--bone)}
+  .modal button span{font-weight:400; font-size:12px; color:var(--mute)}
+  .modal .m-all{background:linear-gradient(180deg,var(--flame),var(--ember) 60%,var(--blood)); color:#fff}
+  .modal .m-all span{color:rgba(255,255,255,.85)}
+  .modal .m-cancel{background:transparent; border:1px solid var(--ash); margin-bottom:0; align-items:center; text-align:center}
+
   .note{
     text-align:center; color:var(--mute); font-size:14px; line-height:1.7;
     padding:52px 16px;
@@ -211,7 +224,7 @@
     <span>🖼 <b>Own</b> it on <a href="https://opensea.io/collection/cubist-souls" target="_blank" rel="noopener">OpenSea</a></span>
   </div>
   <div class="freed" id="freed" hidden>◆ <b id="freedN"></b> of 10,000 souls freed</div>
-  <div class="explore"><a href="/gallery.html">🖼 The Freed — gallery</a> · <a href="/builder.html">🎨 Soul Builder</a></div>
+  <div class="explore"><a href="/gallery">🖼 The Freed — gallery</a></div>
 </header>
 
 <main>
@@ -221,9 +234,13 @@
 
   <div class="warn">
     <b>This is real.</b> Burning destroys the Pikkazo forever on Ethereum mainnet — and mints you its Cubist Soul (same tokenId). No undo, no refund, no takebacks.<br />
-    You only ever approve the <b>exact pieces you select</b> — never your whole collection.
+    You choose how to approve: <b>only the pieces you pick</b>, or your <b>whole collection in one signature</b> for big batches.
   </div>
 
+  <div class="tools" id="tools" hidden>
+    <button class="btn-ghost" id="selectAll">Select all</button>
+    <button class="btn-ghost" id="clearSel">Clear</button>
+  </div>
   <div id="content" class="note">Connect your wallet to see your collection.</div>
 </main>
 
@@ -274,7 +291,8 @@ const NFT_ABI = [
   "function ownerOf(uint256 tokenId) view returns (address)",
   "function getApproved(uint256 tokenId) view returns (address)",
   "function isApprovedForAll(address owner, address operator) view returns (bool)",
-  "function approve(address to, uint256 tokenId)"
+  "function approve(address to, uint256 tokenId)",
+  "function setApprovalForAll(address operator, bool approved)"
 ];
 const SOULS_ABI = [
   "function convert(uint256[] tokenIds)",
@@ -286,7 +304,8 @@ const MC_ABI = [
 
 const $ = s => document.querySelector(s);
 const content = $("#content"), dock = $("#dock");
-const MAX_PER_BURN = 20; // contract allows 50; 20 keeps the tx ~2M gas
+const MAX_PER_TX = 50;   // contract hard limit per convert(); big selections auto-chunk into 50s
+const APPROVE_ALL_AT = 6; // at/above this many pending approvals, offer one-signature approve-all
 let signer, account;
 const selected = new Set();
 
@@ -369,6 +388,7 @@ async function loadTokens() {
   content.querySelectorAll(".card:not(.gone)").forEach(card => {
     card.onclick = () => select(card);
   });
+  $("#tools").hidden = !owned.length;
 }
 
 // eth_getLogs of incoming Transfers. The wallet's own RPC caps block ranges,
@@ -481,25 +501,60 @@ function select(card) {
     selected.delete(id);
     card.classList.remove("sel");
   } else {
-    if (selected.size >= MAX_PER_BURN) {
-      toast(`Max ${MAX_PER_BURN} per burn — light this batch first, then pick more.`);
-      return;
-    }
     selected.add(id);
     card.classList.add("sel");
   }
   updateDock();
 }
 
+// Select-all / clear — the difference between a whale clicking 300 times and once.
+document.addEventListener("click", (e) => {
+  if (e.target.id === "selectAll") {
+    content.querySelectorAll(".card:not(.gone)").forEach(card => {
+      selected.add(card.dataset.id); card.classList.add("sel");
+    });
+    updateDock();
+  } else if (e.target.id === "clearSel") {
+    selected.clear();
+    content.querySelectorAll(".card.sel").forEach(c => c.classList.remove("sel"));
+    updateDock();
+  }
+});
+
 function updateDock() {
   const n = selected.size;
   if (n === 0) { dock.classList.remove("up"); return; }
   const ids = [...selected];
+  const txs = Math.ceil(n / MAX_PER_TX);
   $("#dock-img").src = IMG(ids[ids.length - 1]);
   $("#dock-name").textContent = n === 1 ? `Pikkazo #${ids[0]}` : `${n} canvases selected`;
-  $("#dock-sub").textContent = n === 1 ? "Ready for the flames" : `#${ids.slice(0, 4).join(", #")}${n > 4 ? "…" : ""} · max ${MAX_PER_BURN}`;
+  $("#dock-sub").textContent = n === 1
+    ? "Ready for the flames"
+    : `#${ids.slice(0, 3).join(", #")}${n > 3 ? "…" : ""}${txs > 1 ? ` · ${txs} burn txs` : ""}`;
   $("#burn").textContent = n === 1 ? "🔥 Burn it" : `🔥 Burn ${n}`;
   dock.classList.add("up");
+}
+
+// Only shown when a large batch needs approval: let the holder pick trust vs speed.
+function askApprovalMode(count) {
+  return new Promise(resolve => {
+    const ov = document.createElement("div");
+    ov.className = "overlay";
+    ov.innerHTML =
+      `<div class="modal">
+        <h3>Approve ${count} pieces to burn</h3>
+        <p>That's a big batch. Approving each piece one by one means ${count} separate wallet signatures. Your call:</p>
+        <button class="m-all">⚡ Approve all in one signature<span>Easiest for large holders — one tx lets the Souls contract burn the pieces you selected</span></button>
+        <button class="m-each">🔒 Approve each piece<span>Most cautious — ${count} signatures, only the exact pieces you picked</span></button>
+        <button class="m-cancel">Cancel</button>
+      </div>`;
+    document.body.appendChild(ov);
+    const done = v => { ov.remove(); resolve(v); };
+    ov.querySelector(".m-all").onclick = () => done("all");
+    ov.querySelector(".m-each").onclick = () => done("each");
+    ov.querySelector(".m-cancel").onclick = () => done(null);
+    ov.onclick = e => { if (e.target === ov) done(null); };
+  });
 }
 
 $("#burn").onclick = async () => {
@@ -511,55 +566,70 @@ $("#burn").onclick = async () => {
   try {
     const pikkazo = new ethers.Contract(CONTRACT, NFT_ABI, signer);
 
-    // Approve ONLY the pieces being burned — never the whole collection. Skips
-    // anything already approved so it never asks twice for the same piece.
+    // --- Approvals --- (empty if already approved-for-all; skips already-approved pieces)
     const need = await approvalsNeeded(ids);
-    for (let i = 0; i < need.length; i++) {
-      btn.textContent = need.length === 1 ? "Approve in wallet…" : `Approve ${i + 1}/${need.length}…`;
-      toast(`You approve only the piece${need.length > 1 ? "s" : ""} you selected — never your whole collection.${need.length > 1 ? ` (${i + 1}/${need.length})` : ""}`, 0);
-      const txA = await pikkazo.approve(SOULS, need[i]);
-      await txA.wait();
+    if (need.length) {
+      let mode = "each";
+      if (need.length >= APPROVE_ALL_AT) {
+        mode = await askApprovalMode(need.length);
+        if (mode === null) { btn.disabled = false; updateDock(); return; } // cancelled
+      }
+      if (mode === "all") {
+        btn.textContent = "Approve all in wallet…";
+        toast("One signature so the Souls contract can burn the pieces you select. You can revoke it any time.", 0);
+        await (await pikkazo.setApprovalForAll(SOULS, true)).wait();
+      } else {
+        for (let i = 0; i < need.length; i++) {
+          btn.textContent = need.length === 1 ? "Approve in wallet…" : `Approve ${i + 1}/${need.length}…`;
+          toast(`Approving only the pieces you selected — never your whole collection.${need.length > 1 ? ` (${i + 1}/${need.length})` : ""}`, 0);
+          await (await pikkazo.approve(SOULS, need[i])).wait();
+        }
+      }
     }
 
-    btn.textContent = "Confirm in wallet…";
+    // --- Burn --- convert() caps at 50, so a big selection auto-chunks into 50s.
     const souls = new ethers.Contract(SOULS, SOULS_ABI, signer);
-    const tx = await souls.convert(ids);
-    btn.textContent = "Burning…";
-    const label = ids.length === 1 ? `Pikkazo #${ids[0]}` : `${ids.length} canvases`;
-    toast(`🔥 Burning ${label} — <a href="https://etherscan.io/tx/${tx.hash}" target="_blank" rel="noopener">watch it on Etherscan</a>`, 0);
+    const chunks = [];
+    for (let i = 0; i < ids.length; i += MAX_PER_TX) chunks.push(ids.slice(i, i + MAX_PER_TX));
+    let lastHash;
+    for (let c = 0; c < chunks.length; c++) {
+      const part = chunks[c];
+      btn.textContent = chunks.length > 1 ? `Confirm burn ${c + 1}/${chunks.length}…` : "Confirm in wallet…";
+      const tx = await souls.convert(part);
+      lastHash = tx.hash;
+      btn.textContent = chunks.length > 1 ? `Burning ${c + 1}/${chunks.length}…` : "Burning…";
+      toast(`🔥 Burning ${part.length} canvas${part.length > 1 ? "es" : ""}${chunks.length > 1 ? ` (batch ${c + 1}/${chunks.length})` : ""} — <a href="https://etherscan.io/tx/${tx.hash}" target="_blank" rel="noopener">Etherscan</a>`, 0);
+      await tx.wait();
+      part.forEach(id => {
+        const card = content.querySelector(`.card[data-id="${id}"]`);
+        if (card) {
+          card.classList.add("gone");
+          card.classList.remove("sel");
+          card.onclick = null;
+          const tag = card.querySelector(".tag");
+          if (tag) tag.textContent = `#${id} · soul freed`;
+        }
+        selected.delete(String(id));
+      });
+      const countEl = $("#count");
+      if (countEl) countEl.textContent = Math.max(0, Number(countEl.textContent) - part.length);
+    }
 
-    await tx.wait();
-
-    ids.forEach(id => {
-      const card = content.querySelector(`.card[data-id="${id}"]`);
-      if (card) {
-        card.classList.add("gone");
-        card.classList.remove("sel");
-        card.onclick = null;
-        const tag = card.querySelector(".tag");
-        if (tag) tag.textContent = `#${id} · soul freed`;
-      }
-    });
-    const countEl = $("#count");
-    if (countEl) countEl.textContent = Math.max(0, Number(countEl.textContent) - ids.length);
-
-    selected.clear();
     dock.classList.remove("up");
-    const soulsUrl = ids.length === 1
+    const one = ids.length === 1;
+    const soulsUrl = one
       ? `https://opensea.io/item/ethereum/${SOULS}/${ids[0]}`
       : `https://opensea.io/collection/cubist-souls`;
-    const soulsLink = ids.length === 1
-      ? `<a href="${soulsUrl}" target="_blank" rel="noopener">See your Cubist Soul on OpenSea</a>`
-      : `<a href="${soulsUrl}" target="_blank" rel="noopener">See the Cubist Souls collection</a>`;
-    const shareText = ids.length === 1
+    const soulsLink = `<a href="${soulsUrl}" target="_blank" rel="noopener">${one ? "See your Cubist Soul on OpenSea" : "See the Cubist Souls collection"}</a>`;
+    const shareText = one
       ? `I burned Pikkazo #${ids[0]} and freed its Cubist Soul 🔥 Same number, art recovered.`
       : `I burned ${ids.length} Pikkazos and freed their Cubist Souls 🔥 Same numbers, art recovered.`;
     const shareUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(soulsUrl)}`;
     toast(
-      `☠️ ${ids.length === 1 ? `The canvas is ash — <b>Cubist Soul #${ids[0]}</b> is yours` : `${ids.length} canvases are ash — their <b>Cubist Souls</b> are yours`}. ` +
+      `☠️ ${one ? `The canvas is ash — <b>Cubist Soul #${ids[0]}</b> is yours` : `${ids.length} canvases are ash — their <b>Cubist Souls</b> are yours`}. ` +
       soulsLink +
       ` · <a href="${shareUrl}" target="_blank" rel="noopener">Share on X</a>` +
-      ` · <a href="https://etherscan.io/tx/${tx.hash}" target="_blank" rel="noopener">Proof</a>`,
+      (lastHash ? ` · <a href="https://etherscan.io/tx/${lastHash}" target="_blank" rel="noopener">Proof</a>` : ""),
       0
     );
   } catch (e) {

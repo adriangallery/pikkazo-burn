@@ -11,7 +11,7 @@
 <meta property="og:title" content="Soul Builder — Cubist Souls" />
 <meta property="og:description" content="Compose your own Cubist Soul from the recovered trait library." />
 <meta property="og:image" content="https://cubistsouls.vercel.app/api/img?id=136" />
-<meta property="og:url" content="https://cubistsouls.vercel.app/builder.html" />
+<meta property="og:url" content="https://cubistsouls.com/builder" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Soul Builder — Cubist Souls" />
 <meta name="twitter:description" content="Compose your own Cubist Soul from the recovered trait library." />
@@ -125,7 +125,7 @@
     position:relative; border-radius:10px; overflow:hidden; cursor:pointer;
     background:var(--ink); border:2px solid var(--ash); aspect-ratio:1; transition:.15s;
   }
-  .thumb img{width:100%; height:100%; object-fit:cover; display:block; background:var(--ink)}
+  .thumb img{position:absolute; display:block; background:var(--ink); image-rendering:auto}
   .thumb:hover{border-color:#5c4a40; transform:translateY(-2px)}
   .thumb.sel{border-color:var(--ember); box-shadow:0 0 0 3px rgba(255,91,24,.2)}
   .thumb .tl{
@@ -152,7 +152,7 @@
   <p class="sub">Compose a <b>Cubist Soul</b> from the recovered trait library. Shuffle, tweak, <b>download</b> and share. A free playground — the real Souls only come from <a href="/">burning a Pikkazo</a>.</p>
   <nav class="nav">
     <a href="/">🔥 <b>Burn</b> page</a>
-    <a href="/gallery.html">🖼 <b>The Freed</b></a>
+    <a href="/gallery">🖼 <b>The Freed</b></a>
     <a href="https://opensea.io/collection/cubist-souls" target="_blank" rel="noopener">◆ <b>OpenSea</b></a>
   </nav>
 </header>
@@ -234,6 +234,20 @@ function hexToState(hex){
 function optUrl(catIdx){
   const cat = categories[catIdx];
   return `${RAW}/${cat.dir}/${cat.options[state[catIdx]].file}`;
+}
+
+// Zoomed-thumbnail style: crop the 768x768 plate to the option's content bbox
+// (manifest bbox = [x0,y0,x1,y1], square) so tiny traits (eyes/nose/mouth) fill
+// the thumb instead of reading as a lost dot. The .thumb is overflow:hidden, so we
+// scale the img up and offset it. No bbox -> show the whole plate (fallback).
+function thumbStyle(o){
+  const b = o.bbox;
+  if (!Array.isArray(b) || b.length !== 4) return "width:100%;height:100%;left:0;top:0";
+  const side = (b[2] - b[0]) || 768;
+  const s = 768 / side * 100;      // img size as % of the (square) thumb
+  const l = -b[0] / side * 100;    // offset so bbox top-left lands at thumb 0,0
+  const t = -b[1] / side * 100;
+  return `width:${s}%;height:${s}%;left:${l}%;top:${t}%`;
 }
 
 function loadImage(url){
@@ -319,7 +333,7 @@ function populateThumbs(sec, ci){
   const cat = categories[ci];
   grid.innerHTML = cat.options.map((o, oi) => `
     <div class="thumb${state[ci] === oi ? " sel" : ""}" data-opt="${oi}" title="${o.label}">
-      <img loading="lazy" alt="${o.label}"
+      <img loading="lazy" alt="${o.label}" style="${thumbStyle(o)}"
            src="${RAW}/${cat.dir}/${o.file}" />
       <div class="tl">${o.label}</div>
     </div>`).join("");

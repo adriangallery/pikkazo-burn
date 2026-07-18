@@ -17,7 +17,7 @@ export default function handler(req, res) {
   const host = req.headers.host || "cubistsouls.vercel.app";
   const origin = `${proto}://${host}`;
 
-  const builderUrl = combo ? `/builder.html?combo=${combo}` : "/builder.html";
+  const builderUrl = combo ? `/builder?combo=${combo}` : "/builder";
   const ogImage = combo
     ? `${origin}/api/render?combo=${combo}`
     : `${origin}/api/img?id=136`;
