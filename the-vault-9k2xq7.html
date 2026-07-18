@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Cubist Souls — the people's gallery</title>
+<meta name="description" content="The first collection freed and rebuilt by its own community. Burn a Pikkazo, free its Cubist Soul." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖼️</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<style>
+  :root{
+    --oxblood:#2e0a10;
+    --wall:#7d101a;
+    --wall-2:#a0101b;
+    --wall-lite:#c24c52;
+    --gild:#e0a520;
+    --gild-deep:#a8761a;
+    --bone:#f4ede1;
+    --bone-2:#e7dbc8;
+    --ink:#26090d;
+    --mute:#d3a6a9;
+    --teal:#1f9e8f;
+    --cobalt:#2b4fc7;
+    --ember:#e8622a;
+    --violet:#7a3fa0;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--oxblood); color:var(--bone);
+    font-family:"Spectral",Georgia,serif; font-size:17px; line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,.display{font-family:"Big Shoulders Display",Impact,sans-serif; font-weight:800; line-height:.92; text-transform:uppercase; margin:0}
+  .mono{font-family:"Space Mono",ui-monospace,monospace}
+  a{color:var(--gild); text-decoration:none}
+  img{max-width:100%; display:block}
+
+  .eyebrow{
+    font-family:"Space Mono",monospace; font-size:12px; letter-spacing:.34em;
+    text-transform:uppercase; color:var(--gild);
+  }
+
+  /* ---------- gallery-wall texture ---------- */
+  .wall{
+    background:
+      repeating-linear-gradient(180deg, rgba(0,0,0,.12) 0 2px, transparent 2px 26px),
+      radial-gradient(120% 90% at 50% -10%, var(--wall-2), var(--wall) 55%, var(--oxblood) 100%);
+  }
+
+  /* ---------- HERO ---------- */
+  header.hero{position:relative; text-align:center; padding:0 20px 0; overflow:hidden}
+  .exhibit{
+    position:relative; width:100%; max-width:1300px; margin:0 auto;
+    aspect-ratio:2848/976; border-bottom:none;
+  }
+  .exhibit img{
+    width:100%; height:100%; object-fit:cover;
+    filter:saturate(1.02) brightness(.94);
+    animation:kenburns 26s ease-in-out infinite alternate;
+  }
+  @keyframes kenburns{from{transform:scale(1.02)}to{transform:scale(1.09)}}
+  .exhibit::after{
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(46,10,16,.5) 0%, transparent 22%, transparent 55%, var(--oxblood) 99%);
+  }
+  .markwrap{
+    position:relative; margin:-14vw auto 0; z-index:2; max-width:900px;
+    padding:0 12px 40px;
+  }
+  @media(min-width:900px){ .markwrap{margin-top:-9vw} }
+  .logo-mark{
+    width:76px; height:76px; margin:0 auto 18px; border-radius:8px;
+    border:3px solid var(--gild); box-shadow:0 0 0 4px rgba(224,165,32,.18), 0 18px 40px rgba(0,0,0,.5);
+    background:#f5f9fc;
+  }
+  h1.title{
+    font-size:clamp(56px,15vw,168px); letter-spacing:.005em;
+    color:var(--bone); text-shadow:0 6px 30px rgba(0,0,0,.55);
+  }
+  h1.title .soul{color:var(--gild)}
+  .tagline{
+    font-size:clamp(17px,2.4vw,22px); font-style:italic; color:var(--bone);
+    max-width:620px; margin:14px auto 0; opacity:.94;
+  }
+  .counter{
+    margin:26px auto 4px; display:inline-flex; align-items:baseline; gap:12px;
+    padding:12px 22px; border:1px solid rgba(224,165,32,.4); border-radius:999px;
+    background:rgba(0,0,0,.25); backdrop-filter:blur(4px);
+  }
+  .counter b{font-family:"Big Shoulders Display",sans-serif; font-size:30px; color:var(--gild); line-height:1}
+  .counter span{font-family:"Space Mono",monospace; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--mute)}
+  .cta-row{display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:26px}
+  .btn{
+    font-family:"Space Mono",monospace; font-size:13px; font-weight:700; letter-spacing:.08em;
+    text-transform:uppercase; padding:15px 28px; border-radius:4px; cursor:pointer; border:1px solid transparent;
+    transition:transform .16s ease, box-shadow .16s ease;
+  }
+  .btn-gild{background:linear-gradient(180deg,#f0bf46,var(--gild) 55%,var(--gild-deep)); color:#2a1400; box-shadow:0 8px 24px rgba(224,165,32,.28)}
+  .btn-gild:hover{transform:translateY(-2px); box-shadow:0 12px 30px rgba(224,165,32,.4)}
+  .btn-ghost{background:transparent; border-color:rgba(244,237,225,.35); color:var(--bone)}
+  .btn-ghost:hover{border-color:var(--gild); color:var(--gild)}
+
+  /* ---------- rope divider ---------- */
+  .rope{height:34px; position:relative; margin:0}
+  .rope::before{
+    content:""; position:absolute; left:6%; right:6%; top:50%;
+    height:9px; border-radius:9px; transform:translateY(-50%);
+    background:linear-gradient(180deg,#8a5a2a,#5a3818 55%,#3c2410);
+    box-shadow:0 3px 10px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,210,140,.4);
+  }
+  .rope::after{
+    content:""; position:absolute; left:6%; top:50%; width:16px; height:34px; transform:translate(-50%,-50%);
+    border-radius:4px; background:linear-gradient(180deg,#f0c469,#b3801f);
+    box-shadow:0 3px 8px rgba(0,0,0,.5);
+  }
+
+  /* ---------- sections ---------- */
+  main{position:relative}
+  .room{max-width:1080px; margin:0 auto; padding:78px 22px}
+  .room-head{margin-bottom:34px}
+  .room-head h2{font-size:clamp(34px,6vw,62px); color:var(--bone)}
+  .room-head h2 em{color:var(--gild); font-style:normal}
+  .room-lede{color:var(--mute); max-width:640px; margin-top:10px; font-size:18px}
+
+  /* museum wall plaque (lore / staking) */
+  .plaque{
+    position:relative; background:var(--bone); color:var(--ink);
+    border-radius:6px; padding:44px clamp(24px,5vw,60px);
+    box-shadow:0 26px 60px rgba(0,0,0,.45); border:1px solid var(--bone-2);
+  }
+  .plaque::before{
+    content:""; position:absolute; inset:12px; border:1px solid rgba(38,9,13,.22); border-radius:3px; pointer-events:none;
+  }
+  .plaque .corner{position:absolute; width:16px; height:16px; border:2px solid var(--gild-deep)}
+  .plaque .corner.tl{top:6px; left:6px; border-right:0; border-bottom:0}
+  .plaque .corner.tr{top:6px; right:6px; border-left:0; border-bottom:0}
+  .plaque .corner.bl{bottom:6px; left:6px; border-right:0; border-top:0}
+  .plaque .corner.br{bottom:6px; right:6px; border-left:0; border-top:0}
+  .plaque h3{font-size:clamp(26px,4.2vw,40px); color:var(--ink); margin-bottom:8px}
+  .plaque .sub{font-family:"Space Mono",monospace; font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--gild-deep); margin-bottom:22px}
+  .plaque p{margin:0 0 16px; font-size:18px; line-height:1.7}
+  .plaque p:last-child{margin-bottom:0}
+  .draft{
+    display:inline-block; font-family:"Space Mono",monospace; font-size:10px; letter-spacing:.2em;
+    text-transform:uppercase; color:#8a5a2a; border:1px dashed var(--gild-deep);
+    padding:4px 10px; border-radius:3px; margin-top:22px;
+  }
+
+  /* the ritual — 3 acts */
+  .acts{display:grid; gap:18px; grid-template-columns:1fr}
+  @media(min-width:760px){ .acts{grid-template-columns:repeat(3,1fr)} }
+  .act{
+    position:relative; background:rgba(0,0,0,.22); border:1px solid rgba(224,165,32,.22);
+    border-radius:8px; padding:28px 24px 26px;
+  }
+  .act .no{font-family:"Space Mono",monospace; font-size:11px; letter-spacing:.24em; color:var(--gild); text-transform:uppercase}
+  .act h3{font-size:26px; color:var(--bone); margin:12px 0 8px}
+  .act p{margin:0; color:var(--mute); font-size:16px}
+  .diamond-note{
+    margin-top:22px; padding:22px 24px; border-radius:8px;
+    background:linear-gradient(180deg, rgba(224,165,32,.12), rgba(224,165,32,.04));
+    border:1px solid rgba(224,165,32,.3);
+  }
+  .diamond-note b{color:var(--gild)}
+  .diamond-note p{margin:0; color:var(--bone); font-size:16px}
+
+  /* leaderboard — the liberators */
+  .board{border-top:1px solid rgba(224,165,32,.25)}
+  .lrow{
+    display:grid; grid-template-columns:44px 1fr auto; align-items:center; gap:14px;
+    padding:15px 8px; border-bottom:1px solid rgba(224,165,32,.14);
+  }
+  .lrow .rank{font-family:"Big Shoulders Display",sans-serif; font-size:26px; color:var(--gild)}
+  .lrow .who{font-family:"Space Mono",monospace; font-size:15px; color:var(--bone); overflow:hidden; text-overflow:ellipsis}
+  .lrow .n{font-family:"Space Mono",monospace; font-size:14px; color:var(--mute); white-space:nowrap}
+  .lrow .n b{color:var(--bone); font-size:17px}
+  .lrow:nth-child(1) .rank,.lrow:nth-child(2) .rank,.lrow:nth-child(3) .rank{color:#f4d17a}
+  .board-note{margin-top:16px; font-family:"Space Mono",monospace; font-size:12px; color:var(--mute)}
+  .skel{height:15px; border-radius:4px; background:linear-gradient(100deg,rgba(255,255,255,.06) 30%,rgba(255,255,255,.14) 50%,rgba(255,255,255,.06) 70%); background-size:220% 100%; animation:sweep 1.3s infinite}
+  @keyframes sweep{to{background-position:-220% 0}}
+
+  footer{
+    text-align:center; padding:56px 20px 60px; border-top:1px solid rgba(224,165,32,.2);
+    color:var(--mute); font-family:"Space Mono",monospace; font-size:12px; line-height:2;
+  }
+  footer .ca{color:var(--bone)}
+  footer a{color:var(--gild)}
+
+  .reveal{opacity:0; transform:translateY(22px); transition:opacity .7s ease, transform .7s ease}
+  .reveal.in{opacity:1; transform:none}
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important; scroll-behavior:auto}
+    .reveal{opacity:1; transform:none; transition:none}
+  }
+  :focus-visible{outline:2px solid var(--gild); outline-offset:3px}
+</style>
+</head>
+<body class="wall">
+
+<header class="hero">
+  <div class="exhibit">
+    <picture>
+      <source srcset="/assets/banner.webp" type="image/webp" />
+      <img src="/assets/banner.jpg" alt="Cubist Souls hanging in a red gallery, framed in gold behind a velvet rope" />
+    </picture>
+  </div>
+  <div class="markwrap">
+    <img class="logo-mark" src="/assets/logo.svg" alt="Cubist Souls" />
+    <div class="eyebrow">Reclaimed by the community · Ethereum</div>
+    <h1 class="title">Cubist<br />Souls</h1>
+    <p class="tagline">Ten thousand portraits were left in the dark. We turned the lights back on — and hung every one of them back on the wall.</p>
+    <div class="counter">
+      <b id="freed">—</b><span>of 10,000 souls freed</span>
+    </div>
+    <div class="cta-row">
+      <a class="btn btn-gild" href="/">🔥 Free your Pikkazo</a>
+      <a class="btn btn-ghost" href="https://opensea.io/collection/cubist-souls" target="_blank" rel="noopener">View on OpenSea</a>
+    </div>
+  </div>
+</header>
+
+<div class="rope"></div>
+
+<main>
+
+  <!-- LORE -->
+  <section class="room" id="lore">
+    <div class="room-head reveal">
+      <div class="eyebrow">Wall text · Room I</div>
+      <h2>The <em>Lore</em></h2>
+    </div>
+    <div class="plaque reveal">
+      <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+      <h3>The gallery no one tended</h3>
+      <div class="sub">Cubist Souls · est. by its holders</div>
+      <p>Ten thousand cubist portraits once hung in a gallery. Then the maker walked away — the lights went out, the frames gathered dust, and the collection was left to fade.</p>
+      <p>But the paintings were never truly abandoned. They were waiting for the people who still loved them. One by one, the community came back in, recovered the art and the names, and hung every soul back on the wall — this time, it belongs to <b>us</b>.</p>
+      <p>Cubist Souls is the first collection freed and rebuilt by its own community. Not flipped. Not left behind again. Reclaimed.</p>
+      <span class="draft">Draft — we shape this together</span>
+    </div>
+  </section>
+
+  <!-- HOW A SOUL IS FREED -->
+  <section class="room" id="ritual">
+    <div class="room-head reveal">
+      <div class="eyebrow">The rite · Room II</div>
+      <h2>How a soul is <em>freed</em></h2>
+      <p class="room-lede">You don't buy a Cubist Soul. You free one — by burning the old canvas that trapped it. The soul keeps its number and its face, and comes back on a contract we own.</p>
+    </div>
+    <div class="acts">
+      <div class="act reveal">
+        <div class="no">Act I</div>
+        <h3>Choose the canvas</h3>
+        <p>Pick one — or your whole wallet. You only approve the exact pieces you select, or all of them in one signature for big holders.</p>
+      </div>
+      <div class="act reveal">
+        <div class="no">Act II</div>
+        <h3>Light the fire</h3>
+        <p>Burning destroys the Pikkazo forever on Ethereum. No undo, no refund. An irreversible act of liberation.</p>
+      </div>
+      <div class="act reveal">
+        <div class="no">Act III</div>
+        <h3>Free the soul</h3>
+        <p>Its Cubist Soul — same number, original art recovered — is minted straight to your wallet. No fee beyond gas.</p>
+      </div>
+    </div>
+    <div class="diamond-note reveal">
+      <p><b>Built on a Diamond.</b> Cubist Souls runs on a modular contract (EIP-2535) — one that grows instead of freezing. New rooms open forever: traits, staking, lore, on-chain mechanics — all without ever migrating again. Same collection, same token IDs. This is the final address; we only build on top.</p>
+    </div>
+  </section>
+
+  <!-- LEADERBOARD -->
+  <section class="room" id="liberators">
+    <div class="room-head reveal">
+      <div class="eyebrow">Honor roll · Room III</div>
+      <h2>The <em>Liberators</em></h2>
+      <p class="room-lede">The wallets that freed the most souls. Read live from the chain.</p>
+    </div>
+    <div class="board reveal" id="board">
+      <div class="lrow"><span class="rank">—</span><span class="who"><span class="skel" style="width:60%"></span></span><span class="n"></span></div>
+      <div class="lrow"><span class="rank">—</span><span class="who"><span class="skel" style="width:48%"></span></span><span class="n"></span></div>
+      <div class="lrow"><span class="rank">—</span><span class="who"><span class="skel" style="width:54%"></span></span><span class="n"></span></div>
+    </div>
+    <p class="board-note" id="board-note"></p>
+  </section>
+
+  <!-- STAKING -->
+  <section class="room" id="staking">
+    <div class="room-head reveal">
+      <div class="eyebrow">Next room · Coming soon</div>
+      <h2><em>Staking</em></h2>
+    </div>
+    <div class="plaque reveal">
+      <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+      <h3>Give your soul a place on the wall</h3>
+      <div class="sub">Under construction</div>
+      <p>Stake your Cubist Soul and earn its keep — rewards, a spot on the honor wall, and a say in what the community builds next. The mechanics are being designed now.</p>
+      <span class="draft">Draft — mechanics TBD</span>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Cubist Souls · a community takeover<br />
+  Diamond <span class="ca">0x9252…8406</span> · Ethereum mainnet<br />
+  <a href="/">Burn</a> · <a href="/gallery">The Freed</a> · <a href="https://opensea.io/collection/cubist-souls" target="_blank" rel="noopener">OpenSea</a>
+</footer>
+
+<script>
+const SOULS = "0x9252fdc0b3945203314ea1a9b8d64345bc868406";
+const DEPLOY_BLOCK = 25518546;
+const RPCS = [
+  "https://gateway.tenderly.co/public/mainnet",
+  "https://ethereum-rpc.publicnode.com",
+  "https://eth.llamarpc.com",
+];
+const $ = s => document.querySelector(s);
+
+async function reliableProvider(){
+  for(const url of RPCS){
+    try{ const p = new ethers.JsonRpcProvider(url); await p.getBlockNumber(); return p; }
+    catch(e){}
+  }
+  throw new Error("no rpc");
+}
+
+// scroll reveal
+const io = new IntersectionObserver(es => es.forEach(e => { if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); } }), {threshold:.15});
+document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+
+// live counter + leaderboard from Transfer(from=0) mint events on the diamond
+async function loadChain(){
+  let provider;
+  try{ provider = await reliableProvider(); }
+  catch{ $("#freed").textContent = "—"; $("#board-note").textContent = "Couldn't reach the chain right now."; return; }
+
+  // totalSupply for the hero counter
+  try{
+    const c = new ethers.Contract(SOULS, ["function totalSupply() view returns (uint256)"], provider);
+    const n = Number(await c.totalSupply());
+    animateCount($("#freed"), n);
+  }catch{}
+
+  // mint logs -> burns per wallet
+  const topic = ethers.id("Transfer(address,address,uint256)");
+  const zero = ethers.zeroPadValue("0x0000000000000000000000000000000000000000", 32);
+  let logs = [];
+  try{
+    logs = await provider.getLogs({ address: SOULS, topics:[topic, zero], fromBlock: DEPLOY_BLOCK, toBlock:"latest" });
+  }catch{
+    // chunk fallback
+    try{
+      const latest = await provider.getBlockNumber();
+      for(let from=DEPLOY_BLOCK; from<=latest; from+=9000){
+        const to = Math.min(from+8999, latest);
+        logs = logs.concat(await provider.getLogs({ address: SOULS, topics:[topic, zero], fromBlock:from, toBlock:to }));
+      }
+    }catch{ $("#board-note").textContent = "Leaderboard unavailable right now."; return; }
+  }
+
+  const tally = new Map();
+  logs.forEach(l => {
+    const to = "0x" + l.topics[2].slice(26).toLowerCase();
+    tally.set(to, (tally.get(to)||0) + 1);
+  });
+  const rows = [...tally.entries()].sort((a,b)=>b[1]-a[1]).slice(0,12);
+  renderBoard(rows, tally.size);
+}
+
+function renderBoard(rows, holders){
+  const board = $("#board");
+  if(!rows.length){ board.innerHTML = '<div class="lrow"><span class="rank">—</span><span class="who">No souls freed yet. Be the first.</span><span class="n"></span></div>'; return; }
+  board.innerHTML = rows.map((r,i) => {
+    const a = r[0];
+    const short = a.slice(0,6) + "…" + a.slice(-4);
+    return `<div class="lrow">
+      <span class="rank">${i+1}</span>
+      <a class="who" href="https://opensea.io/${a}" target="_blank" rel="noopener">${short}</a>
+      <span class="n"><b>${r[1]}</b> freed</span>
+    </div>`;
+  }).join("");
+  $("#board-note").textContent = `${holders} liberator${holders===1?"":"s"} so far.`;
+}
+
+function animateCount(el, target){
+  const dur = 1100, t0 = performance.now();
+  function step(t){
+    const k = Math.min(1, (t-t0)/dur);
+    el.textContent = Math.round(target * (1 - Math.pow(1-k,3))).toLocaleString();
+    if(k<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+loadChain();
+</script>
+</body>
+</html>
