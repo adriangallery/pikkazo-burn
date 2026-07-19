@@ -135,6 +135,20 @@
   .ffield select:focus{ outline:none; border-color:var(--gild); }
   .ffield select.on{ border-color:var(--gild); color:var(--flame); }
 
+  .fsep{ display:flex; align-items:center; gap:12px; margin:16px 2px 12px;
+    font-family:ui-monospace,Menlo,monospace; font-size:9px; letter-spacing:.34em;
+    text-transform:uppercase; color:var(--gild); opacity:.85; }
+  .fsep::before,.fsep::after{ content:""; flex:1; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(224,165,32,.3),transparent); }
+  .fsoul-wait{ display:flex; align-items:center; gap:9px; color:var(--mute);
+    font-size:11px; letter-spacing:.08em; text-transform:uppercase; padding:6px 2px; }
+  .fsoul-wait .sp{ width:12px; height:12px; border:2px solid rgba(224,165,32,.3);
+    border-top-color:var(--gild); border-radius:50%; animation:spin .7s linear infinite; flex:none; }
+  .funavail{ color:#7a6a5f; font-size:11px; letter-spacing:.04em; padding:12px 2px;
+    font-family:ui-monospace,Menlo,monospace; }
+  .funavail[role="button"]{ cursor:pointer; }
+  .funavail[role="button"]:hover{ color:var(--mute); }
+
   .factive{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:15px;
     padding-top:14px; border-top:1px solid rgba(224,165,32,.16); }
   .fmatch{ color:var(--mute); font-size:12px; letter-spacing:.1em; text-transform:uppercase;
@@ -280,11 +294,105 @@ async function load(){
 }
 
 /* ─────────────── Filter by trait (lazy, client-side) ─────────────── */
-let TRAITS = null;          // parsed index.json (loaded on first panel open)
+/* CATEGORY REGISTRY — the whole panel is driven by REGISTRY below.
+   To add a future category (equipped traits, freedAt era, …) append ONE entry:
+     { key,               // unique id, used for FILTERS/chips
+       label,             // select label
+       group,             // "canvas" (top grid) | "soul" (SOUL RECORD section)
+       load(),            // async, lazy; resolve when valueOf() is usable
+       values(),          // option order for the select (after load)
+       valueOf(id),       // decoded value for a tokenId (string|null)
+       badge(v),          // short text for card badge + chip (default: v)
+       sort }             // "count" (desc among freed) | "listed" (values() order)
+   Nothing else needs touching: counts, AND-filtering, chips, badges and the
+   Clear button all read the registry. "soul" entries hydrate independently
+   with a small spinner, so a slow loader never blocks the canvas selects.  */
+
+let TRAITS = null;          // parsed traits index.json (lazy, on first open)
+let COHORTS = null;         // Map tokenId -> uint8 cohort (lazy, multicall)
+let RARITY = null;          // parsed rarity.json (lazy)
 let FREED = [];             // freed token ids currently shown
-const FILTERS = {};         // { category: selectedValue }  ('' = Any)
-const SELECTS = {};         // { category: <select> }
+const FILTERS = {};         // { key: selectedValue }  ('' = Any)
+const SELECTS = {};         // { key: <select> }
 const FILTERS_ACTIVE = () => Object.values(FILTERS).some(Boolean);
+
+const RARITY_URL = "https://raw.githubusercontent.com/adriangallery/cubist-souls-assets/main/rarity/rarity.json";
+const MULTICALL3 = "0xcA11bde05977b3631167028862bE2a173976CA11";
+const MC_ABI = ["function tryAggregate(bool requireSuccess, (address target, bytes callData)[] calls) view returns ((bool success, bytes returnData)[])"];
+const COHORT_ABI = ["function cohortOf(uint256) view returns (uint8)"]; // selector 0xd5b0e035
+const COHORT_NAMES = ["OG", "Era I", "Era II", "Era III", "Era IV"];
+const COHORT_TTL = 5 * 60 * 1000; // short — the freed set grows with every burn
+
+async function loadTraits(){
+  if (TRAITS) return;
+  const r = await fetch(TRAITS_URL, { cache: "force-cache" });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  TRAITS = await r.json();
+}
+
+async function loadRarity(){
+  if (RARITY) return;
+  const r = await fetch(RARITY_URL, { cache: "force-cache" });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const j = await r.json();
+  if (typeof j.tiers !== "string" || j.tiers.length < 10000) throw new Error("bad rarity data");
+  RARITY = j;
+}
+
+async function loadCohorts(){
+  if (COHORTS) return;
+  const key = "freed:cohorts";
+  try {
+    const raw = sessionStorage.getItem(key);
+    if (raw){
+      const o = JSON.parse(raw);
+      if (Date.now() - o.t < COHORT_TTL && o.n === FREED.length){
+        COHORTS = new Map(o.v); return;
+      }
+    }
+  } catch {}
+  const p = await reliableProvider();
+  const iface = new ethers.Interface(COHORT_ABI);
+  const mc = new ethers.Contract(MULTICALL3, MC_ABI, p);
+  const m = new Map();
+  for (let i = 0; i < FREED.length; i += 100){
+    const chunk = FREED.slice(i, i + 100);
+    const calls = chunk.map(id => ({ target: SOULS, callData: iface.encodeFunctionData("cohortOf", [id]) }));
+    const res = await mc.tryAggregate(false, calls);
+    res.forEach(({ success, returnData }, j) => {
+      if (success) m.set(chunk[j], Number(iface.decodeFunctionResult("cohortOf", returnData)[0]));
+    });
+  }
+  if (!m.size) throw new Error("cohort multicall returned nothing");
+  COHORTS = m;
+  try { sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), n: FREED.length, v: [...m] })); } catch {}
+}
+
+const CANVAS_CATS = ["Art Background", "Base", "Clothes", "Mouth", "Head", "Left Eye", "Nose", "Right Eye"];
+const REGISTRY = [
+  ...CANVAS_CATS.map(c => ({
+    key: c, label: c, group: "canvas", sort: "count",
+    load: loadTraits,
+    values: () => TRAITS.values[c],
+    valueOf: id => TRAITS.values[c][TRAITS.tokens[c].charCodeAt(id - 1) - TRAITS.base],
+    badge: v => v,
+  })),
+  {
+    key: "Cohort", label: "Cohort", group: "soul", sort: "listed",
+    load: loadCohorts,
+    values: () => COHORT_NAMES,
+    valueOf: id => COHORTS.has(id) ? COHORT_NAMES[COHORTS.get(id)] : null,
+    badge: v => v,
+  },
+  {
+    key: "Rarity", label: "Rarity", group: "soul", sort: "listed",
+    load: loadRarity,
+    values: () => [4, 3, 2, 1, 0].map(t => RARITY.tierNames[t]), // rarest → common
+    valueOf: id => RARITY.tierNames[+RARITY.tiers[id - 1]] ?? null,
+    badge: v => (RARITY.tierEmoji[RARITY.tierNames.indexOf(v)] || "") + " " + v,
+  },
+];
+const CAT = Object.fromEntries(REGISTRY.map(c => [c.key, c]));
 
 const toggle = $("#filterToggle");
 const panel = $("#filterPanel");
@@ -297,13 +405,11 @@ toggle.addEventListener("click", async () => {
     return;
   }
   if (!TRAITS){
-    // lazy fetch, once
+    // lazy fetch, once — only the canvas traits gate the panel
     toggle.classList.add("busy");
     toggle.querySelector(".lbl").textContent = "Loading traits…";
     try {
-      const r = await fetch(TRAITS_URL, { cache: "force-cache" });
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      TRAITS = await r.json();
+      await loadTraits();
       buildPanel();
     } catch (e){
       toggle.classList.remove("busy");
@@ -321,56 +427,79 @@ toggle.addEventListener("click", async () => {
   panel.hidden = false;
 });
 
-function valueOf(cat, id){
-  const s = TRAITS.tokens[cat];
-  return TRAITS.values[cat][s.charCodeAt(id - 1) - TRAITS.base];
+// Build one <select> field for a registry entry (its load() must be resolved).
+function buildField(cat){
+  const counts = new Map();
+  for (const id of FREED){
+    const v = cat.valueOf(id);
+    if (v != null) counts.set(v, (counts.get(v) || 0) + 1);
+  }
+  let opts;
+  if (cat.sort === "listed"){
+    opts = cat.values().filter(v => counts.get(v) > 0).map(v => [v, counts.get(v)]);
+  } else {
+    opts = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }
+  const field = document.createElement("div");
+  field.className = "ffield";
+  const domId = "f-" + cat.key.replace(/\s+/g, "-").toLowerCase();
+  field.innerHTML =
+    `<label for="${domId}">${cat.label}</label>` +
+    `<select id="${domId}" data-cat="${cat.key}">` +
+      `<option value="">Any (${opts.length})</option>` +
+      opts.map(([v, n]) =>
+        `<option value="${v.replace(/"/g, "&quot;")}">${cat.badge(v)} (${n})</option>`).join("") +
+    `</select>`;
+  const sel = field.querySelector("select");
+  SELECTS[cat.key] = sel;
+  FILTERS[cat.key] = FILTERS[cat.key] || "";
+  sel.addEventListener("change", () => {
+    FILTERS[cat.key] = sel.value;
+    sel.classList.toggle("on", !!sel.value);
+    applyFilters();
+  });
+  return field;
 }
 
 function buildPanel(){
-  const cats = TRAITS.categories;
-  // Count each value across the freed set (static per session).
-  const counts = {};
-  for (const c of cats) counts[c] = new Map();
-  for (const id of FREED){
-    for (const c of cats){
-      const v = valueOf(c, id);
-      counts[c].set(v, (counts[c].get(v) || 0) + 1);
-    }
-  }
-
-  const grid = document.createElement("div");
-  grid.className = "fgrid";
-  for (const c of cats){
-    const opts = [...counts[c].entries()]
-      .filter(([, n]) => n > 0)
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-    const field = document.createElement("div");
-    field.className = "ffield";
-    const id = "f-" + c.replace(/\s+/g, "-").toLowerCase();
-    field.innerHTML =
-      `<label for="${id}">${c}</label>` +
-      `<select id="${id}" data-cat="${c}">` +
-        `<option value="">Any (${opts.length})</option>` +
-        opts.map(([v, n]) =>
-          `<option value="${v.replace(/"/g, "&quot;")}">${v} (${n})</option>`).join("") +
-      `</select>`;
-    grid.appendChild(field);
-    const sel = field.querySelector("select");
-    SELECTS[c] = sel;
-    FILTERS[c] = "";
-    sel.addEventListener("change", () => {
-      FILTERS[c] = sel.value;
-      sel.classList.toggle("on", !!sel.value);
-      applyFilters();
-    });
-  }
-
   panel.innerHTML = "";
   const head = document.createElement("p");
   head.className = "fhead";
   head.innerHTML = `Counts are among the <b>${FREED.length.toLocaleString("en-US")}</b> souls freed`;
   panel.appendChild(head);
+
+  // canvas categories — ready now (loadTraits resolved before buildPanel)
+  const grid = document.createElement("div");
+  grid.className = "fgrid";
+  for (const cat of REGISTRY) if (cat.group === "canvas") grid.appendChild(buildField(cat));
   panel.appendChild(grid);
+
+  // SOUL RECORD — new-metadata categories, hydrated independently
+  const soulCats = REGISTRY.filter(c => c.group === "soul");
+  if (soulCats.length){
+    const sep = document.createElement("div");
+    sep.className = "fsep";
+    sep.textContent = "Soul Record";
+    panel.appendChild(sep);
+    const soulGrid = document.createElement("div");
+    soulGrid.className = "fgrid";
+    panel.appendChild(soulGrid);
+    for (const cat of soulCats){
+      const slot = document.createElement("div");
+      slot.className = "ffield";
+      const waiting = () => { slot.innerHTML = `<label>${cat.label}</label><div class="fsoul-wait"><span class="sp"></span>reading the record…</div>`; };
+      const hydrate = attempt => cat.load()
+        .then(() => slot.replaceWith(buildField(cat)))
+        .catch(() => {
+          if (attempt < 1) return new Promise(r => setTimeout(r, 1500)).then(() => hydrate(attempt + 1));
+          slot.innerHTML = `<label>${cat.label}</label><div class="funavail" role="button" tabindex="0">${cat.label} unavailable — tap to retry</div>`;
+          slot.querySelector(".funavail").addEventListener("click", () => { waiting(); hydrate(0); });
+        });
+      waiting();
+      soulGrid.appendChild(slot);
+      hydrate(0);
+    }
+  }
 
   const active = document.createElement("div");
   active.className = "factive";
@@ -387,14 +516,14 @@ function applyFilters(){
   let match = 0;
   cards.forEach(card => {
     const id = +card.dataset.id;
-    const ok = active.every(([cat, val]) => valueOf(cat, id) === val);
+    const ok = active.every(([key, val]) => CAT[key].valueOf(id) === val);
     card.style.display = ok ? "" : "none";
     let b = card.querySelector(".tbadge");
     if (ok && active.length){
-      const txt = active.map(([, val]) => val).join(" · ");
+      const txt = active.map(([key, val]) => CAT[key].badge(val)).join(" · ");
       if (!b){ b = document.createElement("div"); b.className = "tbadge"; card.appendChild(b); }
       b.textContent = txt;
-      b.title = active.map(([cat, val]) => cat + ": " + val).join("\n");
+      b.title = active.map(([key, val]) => CAT[key].label + ": " + val).join("\n");
     } else if (b){ b.remove(); }
     if (ok) match++;
   });
@@ -411,13 +540,14 @@ function renderActive(active, match){
     : `${M} freed`;
 
   chipsEl.innerHTML = "";
-  for (const [cat, val] of active){
+  for (const [key, val] of active){
+    const cat = CAT[key];
     const chip = document.createElement("span");
     chip.className = "fchip";
-    chip.innerHTML = `<small>${cat}</small> ${val} <button type="button" aria-label="Remove ${cat} filter">×</button>`;
+    chip.innerHTML = `<small>${cat.label}</small> ${cat.badge(val)} <button type="button" aria-label="Remove ${cat.label} filter">×</button>`;
     chip.querySelector("button").addEventListener("click", () => {
-      FILTERS[cat] = "";
-      if (SELECTS[cat]){ SELECTS[cat].value = ""; SELECTS[cat].classList.remove("on"); }
+      FILTERS[key] = "";
+      if (SELECTS[key]){ SELECTS[key].value = ""; SELECTS[key].classList.remove("on"); }
       applyFilters();
     });
     chipsEl.appendChild(chip);
