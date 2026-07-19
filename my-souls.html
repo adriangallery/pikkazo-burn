@@ -92,9 +92,27 @@
   .toast{position:fixed; top:18px; left:50%; transform:translateX(-50%); background:var(--smoke); border:1px solid var(--ash); color:var(--bone); padding:13px 20px; border-radius:10px; font-family:"Space Mono",monospace; font-size:13px; z-index:40; max-width:calc(100vw - 32px)}
   :focus-visible{outline:2px solid var(--gild); outline-offset:3px}
   @media (prefers-reduced-motion:reduce){*{animation:none !important}}
+
+  .topnav{position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 14px; background:rgba(20,4,8,.72); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border-bottom:1px solid rgba(224,165,32,.22)}
+  .topnav .brand{display:flex; align-items:center; gap:8px; color:var(--bone); font-family:"Big Shoulders Display",Impact,sans-serif; font-weight:800; text-transform:uppercase; font-size:17px; letter-spacing:.02em; text-decoration:none}
+  .topnav .brand img{width:26px; height:26px; border-radius:5px; border:1px solid var(--gild); background:#f5f9fc}
+  .topnav .links{display:flex; gap:2px; flex-wrap:wrap; justify-content:flex-end}
+  .topnav .links a{color:var(--mute); font-family:"Space Mono",ui-monospace,monospace; font-size:12px; letter-spacing:.05em; text-transform:uppercase; text-decoration:none; padding:6px 9px; border-radius:6px; white-space:nowrap}
+  .topnav .links a:hover,.topnav .links a[aria-current]{color:var(--gild); background:rgba(224,165,32,.12)}
+  @media(max-width:520px){ .topnav .brand span{display:none} .topnav .links a{padding:6px 7px; font-size:11px; letter-spacing:.02em} }
 </style>
 </head>
 <body>
+
+<nav class="topnav">
+  <a class="brand" href="/"><img src="/assets/logo.svg" alt="" /><span>Cubist Souls</span></a>
+  <div class="links">
+    <a href="/">Burn</a>
+    <a href="/gallery">The Freed</a>
+    <a href="/my-souls" aria-current="page">Your Souls</a>
+    <a href="https://opensea.io/collection/cubist-souls" target="_blank" rel="noopener">OpenSea</a>
+  </div>
+</nav>
 
 <header>
   <div class="eyebrow">Your place in the gallery</div>
@@ -304,7 +322,9 @@ function downloadBlob(blob, name){
   const u=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=u; a.download=name;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),2000);
 }
-function shareText(s){ return `I freed ${s.freed} Cubist Soul${s.freed===1?"":"s"} 🖼️🔥 Founding Liberator #${s.rank} of ${s.total}. Reclaimed by the community.`; }
+// URL baked in (X only linkifies it when a char follows — the closing 🔥 does that);
+// @cubistsouls sits in the body, never glued to the URL, so both stay linkified.
+function shareText(s){ return `I freed ${s.freed} Cubist Soul${s.freed===1?"":"s"} 🖼️ Founding Liberator #${s.rank} of ${s.total} on @cubistsouls. Reclaimed by the community.\n\nhttps://cubistsouls.com/my-souls 🔥`; }
 
 async function shareCard(){
   if(!CARD_STATS) return;
@@ -312,15 +332,14 @@ async function shareCard(){
   try{
     const blob=await drawCard(CARD_STATS);
     const file=new File([blob],"cubist-souls.png",{type:"image/png"});
-    const text=shareText(CARD_STATS);
-    const url="https://cubistsouls.com/my-souls";
+    const text=shareText(CARD_STATS); // link + closing 🔥 already baked in
     if(navigator.canShare && navigator.canShare({files:[file]})){
       try{ await navigator.share({files:[file], text, title:"Cubist Souls"}); if(btn){btn.disabled=false;btn.textContent=old;} return; }catch{}
     }
     // desktop: download the card + open the X composer (attach it to the tweet)
     downloadBlob(blob,"cubist-souls.png");
     toast("Card downloaded — attach it to your tweet ✨");
-    window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,"_blank","noopener");
+    window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}`,"_blank","noopener");
   }catch(e){ toast("Couldn't make the card — try again."); }
   if(btn){btn.disabled=false;btn.textContent=old;}
 }
