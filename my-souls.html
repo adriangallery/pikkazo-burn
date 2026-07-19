@@ -710,9 +710,16 @@ function renderFireResult(id, data, note){
       if(navigator.canShare && navigator.canShare({files:[file]})){
         try{ await navigator.share({files:[file], text:share, title:"Cubist Souls × WTP!"}); btn.disabled=false; btn.textContent=old; return; }catch{}
       }
-      // desktop: download the image + open the composer with just the text
-      downloadBlob(blob,`cubist-soul-${id}-fire.png`);
-      toast("Image downloaded — attach it to your tweet ✨");
+      // desktop: X's composer accepts pasted images — copy to clipboard, Cmd+V in the tweet.
+      let copied=false;
+      try{
+        if(navigator.clipboard && window.ClipboardItem){
+          await navigator.clipboard.write([new ClipboardItem({"image/png": blob.type==="image/png"?blob:new Blob([blob],{type:"image/png"})})]);
+          copied=true;
+        }
+      }catch{}
+      if(copied){ toast("Image copied — paste it into your tweet (Cmd+V) ✨"); }
+      else{ downloadBlob(blob,`cubist-soul-${id}-fire.png`); toast("Image downloaded — attach it to your tweet ✨"); }
     }catch{ /* CORS/red: el composer sale igual, sin imagen */ }
     window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(share)}`,"_blank","noopener");
     btn.disabled=false; btn.textContent=old;
