@@ -21,9 +21,11 @@
     margin:0; background-color:var(--wall); color:var(--bone);
     font-family:"Spectral",Georgia,serif; -webkit-font-smoothing:antialiased; min-height:100vh;
     background-image:
-      repeating-linear-gradient(180deg, rgba(0,0,0,.10) 0 2px, transparent 2px 24px),
-      radial-gradient(1200px 760px at 50% -60px, rgba(196,76,82,.4), transparent 72%),
-      radial-gradient(1000px 900px at 50% 120%, var(--oxblood), transparent 60%);
+      radial-gradient(1200px 760px at 50% -60px, rgba(196,76,82,.28), transparent 72%),
+      radial-gradient(1000px 900px at 50% 120%, var(--oxblood), transparent 60%),
+      url("assets/wall-lowpoly-red.svg");
+    background-attachment: fixed;
+    background-size: auto, auto, cover;
   }
   a{color:var(--gild); text-decoration:none}
   .mono{font-family:"Space Mono",monospace}

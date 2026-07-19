@@ -22,12 +22,15 @@
   }
   *{box-sizing:border-box}
   body{
-    margin:0; background:var(--ink); color:var(--bone);
+    margin:0; background-color:#7d101a; color:var(--bone);
     font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased; min-height:100vh;
     background-image:
-      radial-gradient(900px 500px at 50% -10%, rgba(255,91,24,.16), transparent 70%),
-      radial-gradient(600px 400px at 90% 110%, rgba(255,176,32,.07), transparent 70%);
+      radial-gradient(1200px 760px at 50% -60px, rgba(196,76,82,.28), transparent 72%),
+      radial-gradient(1000px 900px at 50% 120%, #2e0a10, transparent 60%),
+      url("assets/wall-lowpoly-red.svg");
+    background-attachment: fixed;
+    background-size: auto, auto, cover;
   }
   a{color:var(--flame); text-decoration:none}
   header{padding:30px 20px 6px; text-align:center}

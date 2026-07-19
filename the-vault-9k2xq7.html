@@ -48,9 +48,13 @@
 
   /* ---------- gallery-wall texture ---------- */
   .wall{
-    background:
-      repeating-linear-gradient(180deg, rgba(0,0,0,.12) 0 2px, transparent 2px 26px),
-      radial-gradient(120% 90% at 50% -10%, var(--wall-2), var(--wall) 55%, var(--oxblood) 100%);
+    background-color:var(--wall);
+    background-image:
+      radial-gradient(120% 60% at 50% -10%, rgba(160,16,27,.55), transparent 60%),
+      radial-gradient(1000px 900px at 50% 120%, var(--oxblood), transparent 60%),
+      url("assets/wall-lowpoly-red.svg");
+    background-attachment: fixed;
+    background-size: auto, auto, cover;
   }
 
   /* ---------- HERO ---------- */
