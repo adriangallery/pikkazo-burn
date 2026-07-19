@@ -679,8 +679,9 @@ async function doFire(id){
 
 function renderFireResult(id, data, note){
   const postUrl = data.postUrl || WTP_HOME;
-  // Share text lands the click on WTP's feed post (postUrl), by design.
-  const share = `My Cubist Soul #${id} went through the fire 🔥 @cubistsouls · made with WTP! tech\n\n${postUrl}`;
+  // Adrian 19-jul: the tweet carries the IMAGE, not the raw postUrl (the WTP funnel
+  // lives in the modal's "See it on WTP" / pitch links instead).
+  const share = `My Cubist Soul #${id} went through the fire 🔥 @cubistsouls · made with WTP! tech`;
   const m = fireModalShell(`
     <div class="cx-eyebrow">Fresh out of the fire</div>
     <div class="cx-title">Soul #${id} · “Fire is fine”</div>
@@ -698,7 +699,24 @@ function renderFireResult(id, data, note){
         <a class="join" href="${WTP_HOME}" target="_blank" rel="noopener">Join free</a>
       </div>
     </div>`);
-  m.querySelector("#cxShare").onclick = ()=> window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(share)}`,"_blank","noopener");
+  m.querySelector("#cxShare").onclick = async ()=>{
+    const btn=m.querySelector("#cxShare"); const old=btn.textContent;
+    btn.disabled=true; btn.textContent="Preparing…";
+    try{
+      const r=await fetch(data.imageUrl,{mode:"cors"}); if(!r.ok) throw 0;
+      const blob=await r.blob();
+      const file=new File([blob],`cubist-soul-${id}-fire.png`,{type:blob.type||"image/png"});
+      // mobile: native share sheet attaches the image to the tweet directly
+      if(navigator.canShare && navigator.canShare({files:[file]})){
+        try{ await navigator.share({files:[file], text:share, title:"Cubist Souls × WTP!"}); btn.disabled=false; btn.textContent=old; return; }catch{}
+      }
+      // desktop: download the image + open the composer with just the text
+      downloadBlob(blob,`cubist-soul-${id}-fire.png`);
+      toast("Image downloaded — attach it to your tweet ✨");
+    }catch{ /* CORS/red: el composer sale igual, sin imagen */ }
+    window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(share)}`,"_blank","noopener");
+    btn.disabled=false; btn.textContent=old;
+  };
   m.querySelector("#cxDl").onclick    = ()=> downloadImage(data.imageUrl, `cubist-soul-${id}-fire.png`);
 }
 
