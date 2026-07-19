@@ -57,6 +57,13 @@
   .badge .stats{display:flex; gap:26px; justify-content:center; flex-wrap:wrap; margin-top:14px}
   .badge .stat{font-family:"Space Mono",monospace; color:var(--mute); font-size:12px; letter-spacing:.1em; text-transform:uppercase}
   .badge .stat b{display:block; font-family:"Big Shoulders Display",sans-serif; font-weight:800; font-size:32px; color:var(--gild); letter-spacing:0}
+  .share-row{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:22px}
+  .btn-share{font-family:"Space Mono",monospace; font-weight:700; font-size:12px; letter-spacing:.06em; text-transform:uppercase;
+    padding:12px 20px; border-radius:6px; cursor:pointer; border:1px solid transparent;
+    background:linear-gradient(180deg,#f0bf46,var(--gild) 55%,var(--gild-deep)); color:#2a1400; transition:.16s ease}
+  .btn-share:hover{transform:translateY(-1px)}
+  .btn-share.ghost{background:transparent; border-color:rgba(224,165,32,.45); color:var(--bone)}
+  .btn-share.ghost:hover{border-color:var(--gild); color:var(--gild)}
 
   .section-label{text-align:center; font-family:"Space Mono",monospace; font-size:12px; letter-spacing:.28em; text-transform:uppercase; color:var(--gild); margin:44px 0 18px}
 
@@ -121,6 +128,7 @@ const MC_ABI = ["function tryAggregate(bool requireSuccess, (address target, byt
 const $ = s => document.querySelector(s);
 const content = $("#content");
 const IMG = id => `/api/img?id=${id}`;
+let CARD_STATS = null; // {freed, rank, total, held, tier} — used to draw the shareable card
 
 function toast(msg, ms=6000){
   document.querySelectorAll(".toast").forEach(t=>t.remove());
@@ -225,6 +233,7 @@ function render(account, freed, rank, totalLibs, owned){
     return;
   }
   const tier = tierOf(freed);
+  CARD_STATS = { freed, rank, total: totalLibs, held: owned.length, tier };
   content.className="";
   content.innerHTML = `
     <div class="badge">
@@ -234,6 +243,10 @@ function render(account, freed, rank, totalLibs, owned){
         <div class="stat"><b>#${rank}</b>of ${totalLibs} liberators</div>
         <div class="stat"><b>${freed}</b>souls freed</div>
         <div class="stat"><b>${owned.length}</b>held now</div>
+      </div>
+      <div class="share-row">
+        <button id="shareCard" class="btn-share">🔥 Share on X</button>
+        <button id="dlCard" class="btn-share ghost">⤓ Download card</button>
       </div>
     </div>
     <div class="section-label">Your collection · ${owned.length} soul${owned.length===1?"":"s"}</div>
@@ -253,6 +266,72 @@ function render(account, freed, rank, totalLibs, owned){
       <div class="tag">Soul #${id}</div>
     </a>`).join("");
 }
+
+// ---- shareable recognition card (drawn client-side, WTP pattern) ----
+function roundRect(x, X, Y, w, h, r){ x.beginPath(); x.moveTo(X+r,Y); x.arcTo(X+w,Y,X+w,Y+h,r); x.arcTo(X+w,Y+h,X,Y+h,r); x.arcTo(X,Y+h,X,Y,r); x.arcTo(X,Y,X+w,Y,r); x.closePath(); }
+
+async function drawCard(s){
+  try{ await document.fonts.ready; }catch{}
+  const W=1200, H=630, c=document.createElement("canvas"); c.width=W; c.height=H;
+  const x=c.getContext("2d");
+  const g=x.createLinearGradient(0,0,0,H); g.addColorStop(0,"#a0101b"); g.addColorStop(.55,"#7d101a"); g.addColorStop(1,"#2e0a10");
+  x.fillStyle=g; x.fillRect(0,0,W,H);
+  x.strokeStyle="rgba(0,0,0,.10)"; x.lineWidth=1;
+  for(let y=0;y<H;y+=24){ x.beginPath(); x.moveTo(0,y+.5); x.lineTo(W,y+.5); x.stroke(); }
+  const m=54; roundRect(x,m,m,W-2*m,H-2*m,18); x.fillStyle="rgba(20,4,8,.35)"; x.fill(); x.strokeStyle="rgba(224,165,32,.5)"; x.lineWidth=2; x.stroke();
+  x.textAlign="center";
+  x.fillStyle="#e0a520"; x.font="700 22px 'Space Mono', monospace";
+  x.fillText(`FOUNDING LIBERATOR · ${String(s.tier).toUpperCase()}`, W/2, 152, W-160);
+  // headline: YOU FREED <n> SOULS (number in gold)
+  x.font="800 92px 'Big Shoulders Display', sans-serif";
+  const pre="YOU FREED ", num=String(s.freed), post=" SOULS";
+  const wp=x.measureText(pre).width, wn=x.measureText(num).width, ws=x.measureText(post).width;
+  let sx=(W-(wp+wn+ws))/2; const y1=278; x.textAlign="left";
+  x.fillStyle="#f4ede1"; x.fillText(pre,sx,y1);
+  x.fillStyle="#e0a520"; x.fillText(num,sx+wp,y1);
+  x.fillStyle="#f4ede1"; x.fillText(post,sx+wp+wn,y1);
+  x.textAlign="center";
+  const cols=[[`#${s.rank}`,`OF ${s.total} LIBERATORS`],[String(s.freed),"SOULS FREED"],[String(s.held),"HELD NOW"]];
+  const cx=[W/2-320,W/2,W/2+320], sy=420;
+  cols.forEach((col,i)=>{ x.fillStyle="#e0a520"; x.font="800 62px 'Big Shoulders Display', sans-serif"; x.fillText(col[0],cx[i],sy);
+    x.fillStyle="#d3a6a9"; x.font="400 18px 'Space Mono', monospace"; x.fillText(col[1],cx[i],sy+44); });
+  x.fillStyle="rgba(244,237,225,.62)"; x.font="700 21px 'Space Mono', monospace";
+  x.fillText("CUBIST SOULS · CUBISTSOULS.COM", W/2, H-92);
+  return await new Promise(res=>c.toBlob(res,"image/png"));
+}
+
+function downloadBlob(blob, name){
+  const u=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=u; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),2000);
+}
+function shareText(s){ return `I freed ${s.freed} Cubist Soul${s.freed===1?"":"s"} 🖼️🔥 Founding Liberator #${s.rank} of ${s.total}. Reclaimed by the community.`; }
+
+async function shareCard(){
+  if(!CARD_STATS) return;
+  const btn=$("#shareCard"); const old=btn?btn.textContent:""; if(btn){btn.disabled=true;btn.textContent="Making card…";}
+  try{
+    const blob=await drawCard(CARD_STATS);
+    const file=new File([blob],"cubist-souls.png",{type:"image/png"});
+    const text=shareText(CARD_STATS);
+    const url="https://cubistsouls.com/my-souls";
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file], text, title:"Cubist Souls"}); if(btn){btn.disabled=false;btn.textContent=old;} return; }catch{}
+    }
+    // desktop: download the card + open the X composer (attach it to the tweet)
+    downloadBlob(blob,"cubist-souls.png");
+    toast("Card downloaded — attach it to your tweet ✨");
+    window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,"_blank","noopener");
+  }catch(e){ toast("Couldn't make the card — try again."); }
+  if(btn){btn.disabled=false;btn.textContent=old;}
+}
+async function downloadCard(){
+  if(!CARD_STATS) return;
+  try{ downloadBlob(await drawCard(CARD_STATS),"cubist-souls.png"); }catch{ toast("Couldn't make the card — try again."); }
+}
+document.addEventListener("click", e=>{
+  if(e.target.closest("#shareCard")) shareCard();
+  else if(e.target.closest("#dlCard")) downloadCard();
+});
 
 if(window.ethereum){
   window.ethereum.on?.("accountsChanged", ()=>location.reload());
