@@ -5,5 +5,8 @@
   "description": "Cubist Souls — burn page, Soul Builder + server-side render",
   "dependencies": {
     "sharp": "^0.33.5"
+  },
+  "devDependencies": {
+    "ethers": "^6.13.4"
   }
 }

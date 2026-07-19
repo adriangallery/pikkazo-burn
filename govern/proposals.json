@@ -1,0 +1,15 @@
+[
+  {
+    "id": "prop-000",
+    "type": "INFO",
+    "title": "TEST · Which wing of the museum opens first?",
+    "body": "This is a TEST proposal used to shake down the Cubist Souls governance system before the first real vote. It counts for nothing — vote freely, re-vote as often as you like. The museum has been dark for a long time; now that the community holds the keys, which hall should we light up first? Your vote is weighted by your Museum Hours at the snapshot block, and anyone can reproduce the count. (Adrian will publish Proposal #1 for real once this dry run looks good.)",
+    "options": [
+      "The Cubist Wing — put the art front and centre",
+      "The Hall of Liberators — honour the wallets that freed the collection",
+      "The Secret Vault — lean into the mystery"
+    ],
+    "snapshotBlock": 25566780,
+    "closesAt": "2026-07-26T12:33:11.000Z"
+  }
+]

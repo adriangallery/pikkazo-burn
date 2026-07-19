@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Govern — Cubist Souls</title>
+<meta name="description" content="The museum listens. Cubist Souls governance — vote by wallet signature, weighted by Museum Hours, counted transparently by anyone." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏛️</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Spectral:ital,wght@0,400;0,500;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<style>
+  :root{
+    --oxblood:#2e0a10; --wall:#7d101a; --wall-2:#a0101b; --wall-lite:#c24c52;
+    --gild:#e0a520; --gild-deep:#a8761a; --bone:#f4ede1; --ink:#26090d;
+    --mute:#d3a6a9; --smoke:#20090d; --ash:#4a1a20;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background-color:var(--wall); color:var(--bone);
+    font-family:"Spectral",Georgia,serif; -webkit-font-smoothing:antialiased; min-height:100vh;
+    background-image:
+      radial-gradient(1200px 760px at 50% -60px, rgba(196,76,82,.28), transparent 72%),
+      radial-gradient(1000px 900px at 50% 120%, var(--oxblood), transparent 60%),
+      url("assets/wall-lowpoly-red.svg");
+    background-attachment: fixed;
+    background-size: auto, auto, cover;
+  }
+  a{color:var(--gild); text-decoration:none}
+  .mono{font-family:"Space Mono",monospace}
+
+  .topnav{position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 14px; background:rgba(20,4,8,.72); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border-bottom:1px solid rgba(224,165,32,.22)}
+  .topnav .brand{display:flex; align-items:center; gap:8px; color:var(--bone); font-family:"Big Shoulders Display",Impact,sans-serif; font-weight:800; text-transform:uppercase; font-size:17px; letter-spacing:.02em; text-decoration:none}
+  .topnav .brand img{width:26px; height:26px; border-radius:5px; border:1px solid var(--gild); background:#f5f9fc}
+  .topnav .links{display:flex; gap:2px; flex-wrap:wrap; justify-content:flex-end}
+  .topnav .links a{color:var(--mute); font-family:"Space Mono",monospace; font-size:12px; letter-spacing:.05em; text-transform:uppercase; padding:6px 9px; border-radius:6px; white-space:nowrap}
+  .topnav .links a:hover{color:var(--gild); background:rgba(224,165,32,.12)}
+
+  header{text-align:center; padding:48px 20px 6px}
+  .eyebrow{font-family:"Space Mono",monospace; font-size:11px; letter-spacing:.34em; text-transform:uppercase; color:var(--gild)}
+  h1{font-family:"Big Shoulders Display",Impact,sans-serif; font-weight:800; text-transform:uppercase; line-height:.9; font-size:clamp(48px,12vw,104px); color:var(--bone); margin:6px 0 0; text-shadow:0 4px 20px rgba(0,0,0,.4)}
+  h1 small{display:block; font-family:"Spectral",serif; font-style:italic; font-weight:400; text-transform:none; font-size:clamp(15px,2.4vw,20px); color:var(--gild); margin-top:10px; letter-spacing:0}
+  .lede{font-style:italic; color:var(--bone); opacity:.9; max-width:600px; margin:14px auto 0; font-size:clamp(15px,2.2vw,18px)}
+  .secret{font-family:"Space Mono",monospace; font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--gild); opacity:.75; margin-top:14px}
+
+  main{max-width:820px; margin:0 auto; padding:8px 18px 90px}
+
+  .bar{display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap; margin:26px 0 30px}
+  button{font:inherit; cursor:pointer; border:none; border-radius:6px; padding:14px 26px; font-family:"Space Mono",monospace; font-weight:700; font-size:13px; letter-spacing:.06em; text-transform:uppercase; transition:.16s ease}
+  .btn-connect{background:linear-gradient(180deg,#f0bf46,var(--gild) 55%,var(--gild-deep)); color:#2a1400; box-shadow:0 8px 24px rgba(224,165,32,.28)}
+  .btn-connect:hover{transform:translateY(-2px)}
+  .pill{display:inline-flex; align-items:center; gap:9px; background:rgba(0,0,0,.3); border:1px solid var(--ash); padding:11px 18px; border-radius:999px; font-size:13px; color:var(--mute); font-family:"Space Mono",monospace}
+  .pill b{color:var(--bone)}
+  .dot{width:7px;height:7px;border-radius:50%;background:#37d67a;box-shadow:0 0 10px #37d67a}
+  .pill .mh{color:var(--gild)}
+
+  /* proposal card */
+  .card{background:rgba(20,4,8,.42); border:1px solid rgba(224,165,32,.3); border-radius:14px; padding:26px 24px 24px; margin:0 0 24px; box-shadow:0 18px 46px rgba(0,0,0,.38)}
+  .card .head{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px}
+  .badge{font-family:"Space Mono",monospace; font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; padding:5px 10px; border-radius:5px}
+  .badge.info{background:rgba(43,79,199,.18); border:1px solid rgba(120,150,240,.5); color:#cdd9ff}
+  .badge.exec{background:rgba(120,120,120,.14); border:1px solid rgba(180,180,180,.35); color:#cfc9c2}
+  .badge.test{background:rgba(232,98,42,.16); border:1px solid rgba(232,98,42,.5); color:#ffcbb0}
+  .badge.closed{background:rgba(0,0,0,.3); border:1px solid var(--ash); color:var(--mute)}
+  .card h2{font-family:"Big Shoulders Display",sans-serif; font-weight:800; text-transform:uppercase; font-size:clamp(24px,4.4vw,34px); color:var(--bone); line-height:1; margin:2px 0 0; flex:1 1 100%}
+  .card .body{color:var(--bone); opacity:.88; font-size:15.5px; line-height:1.65; margin:6px 0 16px}
+  .card .meta{display:flex; gap:16px; flex-wrap:wrap; font-family:"Space Mono",monospace; font-size:11px; color:var(--mute); letter-spacing:.03em; margin-bottom:18px}
+  .card .meta b{color:var(--gild)}
+  .countdown{font-variant-numeric:tabular-nums}
+
+  /* option rows */
+  .options{display:flex; flex-direction:column; gap:10px}
+  .opt{position:relative; overflow:hidden; border:1px solid rgba(224,165,32,.28); border-radius:9px; background:rgba(0,0,0,.24); cursor:pointer; transition:.16s ease}
+  .opt:hover{border-color:var(--gild)}
+  .opt[aria-disabled="true"]{cursor:default}
+  .opt .fill{position:absolute; left:0; top:0; bottom:0; width:0; background:linear-gradient(90deg, rgba(224,165,32,.28), rgba(224,165,32,.12)); transition:width .6s cubic-bezier(.2,.7,.2,1)}
+  .opt .fg{position:relative; display:flex; align-items:center; gap:12px; padding:13px 15px}
+  .opt .radio{width:18px; height:18px; border-radius:50%; border:2px solid var(--gild-deep); flex:none; display:grid; place-items:center}
+  .opt.mine .radio{border-color:var(--gild)}
+  .opt.mine .radio::after{content:""; width:9px; height:9px; border-radius:50%; background:var(--gild)}
+  .opt .label{flex:1; font-size:15px; color:var(--bone); line-height:1.35}
+  .opt .pct{font-family:"Space Mono",monospace; font-weight:700; font-size:14px; color:var(--gild); font-variant-numeric:tabular-nums}
+  .opt .sub{font-family:"Space Mono",monospace; font-size:10.5px; color:var(--mute); margin-top:2px}
+  .opt.mine{border-color:var(--gild); box-shadow:inset 0 0 0 1px rgba(224,165,32,.4)}
+  .opt .youtag{font-family:"Space Mono",monospace; font-size:10px; color:var(--gild); letter-spacing:.1em; text-transform:uppercase}
+
+  .tallyline{display:flex; justify-content:space-between; align-items:center; margin-top:16px; font-family:"Space Mono",monospace; font-size:11px; color:var(--mute)}
+  .tallyline b{color:var(--bone)}
+
+  .status{font-family:"Space Mono",monospace; font-size:12px; color:var(--mute); padding:10px 0}
+  .status.err{color:#ffb3a6}
+
+  .grey-list{margin-top:12px; font-family:"Space Mono",monospace; font-size:11px; color:#9c7a7d; line-height:1.7}
+  .grey-list .gl-head{color:var(--mute); text-transform:uppercase; letter-spacing:.12em; font-size:10px}
+
+  /* verify section */
+  details.verify{max-width:820px; margin:8px auto 0; background:rgba(20,4,8,.4); border:1px solid rgba(224,165,32,.24); border-radius:12px; padding:0 22px}
+  details.verify summary{cursor:pointer; list-style:none; padding:18px 0; font-family:"Space Mono",monospace; font-size:13px; letter-spacing:.06em; text-transform:uppercase; color:var(--gild)}
+  details.verify summary::-webkit-details-marker{display:none}
+  details.verify summary::before{content:"▸ "; color:var(--gild)}
+  details.verify[open] summary::before{content:"▾ "}
+  details.verify .vbody{padding:0 0 22px; color:var(--bone); opacity:.9; font-size:14.5px; line-height:1.7}
+  details.verify pre{background:#140406; border:1px solid var(--ash); border-radius:8px; padding:14px 16px; overflow-x:auto; font-family:"Space Mono",monospace; font-size:12.5px; color:var(--bone); white-space:pre}
+  details.verify code{font-family:"Space Mono",monospace; color:var(--gild); font-size:.92em}
+  details.verify ul{padding-left:20px}
+  details.verify li{margin:5px 0}
+  details.verify a{text-decoration:underline}
+
+  .toast{position:fixed; top:64px; left:50%; transform:translateX(-50%); background:var(--smoke); border:1px solid var(--ash); color:var(--bone); padding:13px 20px; border-radius:10px; font-family:"Space Mono",monospace; font-size:13px; z-index:55; max-width:calc(100vw - 32px); text-align:center}
+  :focus-visible{outline:2px solid var(--gild); outline-offset:3px}
+  @media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important}}
+  nav.foot{text-align:center; padding:40px 20px 60px; font-family:"Space Mono",monospace; font-size:12px; color:var(--mute)}
+  nav.foot a{margin:0 4px}
+  @media(max-width:520px){ .topnav .brand span{display:none} .card{padding:22px 16px 20px} }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <a class="brand" href="/"><img src="/assets/logo.svg" alt="" /><span>Cubist Souls</span></a>
+  <div class="links">
+    <a href="/">Burn</a>
+    <a href="/gallery">The Freed</a>
+    <a href="/my-souls">Your Souls</a>
+    <a href="https://opensea.io/collection/cubist-souls" target="_blank" rel="noopener">OpenSea</a>
+  </div>
+</nav>
+
+<header>
+  <div class="eyebrow">The people's gallery decides</div>
+  <h1>🏛 Govern<small>the museum listens</small></h1>
+  <p class="lede">Proposals are decided by the community that reclaimed the collection. Voting is free — you sign with your wallet, never pay gas. Your voice is weighted by the <a href="/my-souls?mh=1">Museum Hours</a> your souls had kept at the snapshot block.</p>
+  <div class="secret">Preview · the museum keeps its secrets</div>
+</header>
+
+<main>
+  <div class="bar" id="bar">
+    <button class="btn-connect" id="connect">Connect Wallet</button>
+  </div>
+  <div id="proposals"></div>
+</main>
+
+<details class="verify">
+  <summary>Verify the count yourself</summary>
+  <div class="vbody" id="verifybody"></div>
+</details>
+
+<nav class="foot">
+  <a href="/">🔥 Burn</a> · <a href="/gallery">🖼 The Freed</a> · <a href="/my-souls">Your Souls</a> · <a href="https://opensea.io/collection/cubist-souls" target="_blank" rel="noopener">◆ OpenSea</a>
+</nav>
+
+<script>
+/* ═══════════════════════════ Cubist Souls · GOVERN ═══════════════════════════
+   Free, signature-based governance. The server (api/govern/*) is a dumb mailbox
+   of signed ballots; ALL verification and counting happen here, client-side,
+   over public data — so anyone can reproduce the result.
+
+   Voting weight = "Museum Hours" (MH) of the voter's wallet AT the proposal's
+   snapshot block. The MH-at-block engine below is a port of the CANONICAL MH
+   engine that lives in  my-souls.html  (the block marked "MUSEUM HOURS"). Same
+   formula and constants; the only change is that it is evaluated as of a past
+   block B instead of "now":
+     • only Transfers with blockNumber ≤ B are considered
+     • hours run from acquisition up to the TIMESTAMP of block B
+   If you touch the formula, my-souls.html is the source of truth — keep them
+   in lock-step. ────────────────────────────────────────────────────────────── */
+
+const SOULS = "0x9252fdc0b3945203314ea1a9b8d64345bc868406";
+const MULTICALL3 = "0xcA11bde05977b3631167028862bE2a173976CA11";
+const DEPLOY_BLOCK = 25518546;
+const RPCS = [
+  "https://gateway.tenderly.co/public/mainnet",
+  "https://ethereum-rpc.publicnode.com",
+  "https://eth.llamarpc.com",
+];
+const MC_ABI = ["function tryAggregate(bool requireSuccess, (address target, bytes callData)[] calls) view returns ((bool success, bytes returnData)[])"];
+const ZERO40 = "0x" + "0".repeat(40);
+
+/* ── MH formula constants (mirror of my-souls.html) ── */
+const MH_BASE = 1.0;                                 // MH / soul / hour held
+const MH_COHORT_MULT = [2.0, 1.5, 1.25, 1.0, 1.0];   // OG · Era I · Era II · Era III · Era IV
+const MH_RARITY_FALLBACK = [1.0, 1.15, 1.3, 1.5, 2.0];
+const MH_LIB_TIERS = [
+  {min:50, name:"Founding Patron", mult:1.3},
+  {min:20, name:"Patron",          mult:1.2},
+  {min:5,  name:"Curator",         mult:1.1},
+  {min:1,  name:"Liberator",       mult:1.05},
+  {min:0,  name:"Visitor",         mult:1.0},
+];
+const MH_RARITY_URL = "https://raw.githubusercontent.com/adriangallery/cubist-souls-assets/main/rarity/rarity.json";
+const MH_COHORT_ABI = ["function cohortOf(uint256) view returns (uint8)"];
+const libOf = freed => MH_LIB_TIERS.find(t => freed >= t.min);
+
+const $ = s => document.querySelector(s);
+let ACCOUNT = null;
+let READ_PROVIDER = null;
+let PROPOSALS = [];
+
+function toast(msg, ms=5000){
+  document.querySelectorAll(".toast").forEach(t=>t.remove());
+  const t=document.createElement("div"); t.className="toast"; t.textContent=msg;
+  document.body.appendChild(t); if(ms) setTimeout(()=>t.remove(),ms);
+}
+const short = w => `${w.slice(0,6)}…${w.slice(-4)}`;
+const fmt = (v,d=2) => (v||0).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
+
+/* ════════ CANONICAL VOTE MESSAGE (EIP-191 personal_sign) ════════
+   EXACT bytes the wallet signs and the tally recovers. "\n" separators,
+   address lowercased. Do not reorder or reword — the server stores it and the
+   tally reconstructs it verbatim. */
+function govMessage(id, choice, snapshotBlock, address){
+  return "Cubist Souls Govern\n" +
+         "Proposal: " + id + "\n" +
+         "Choice: " + choice + "\n" +
+         "Snapshot: " + snapshotBlock + "\n" +
+         "Voter: " + address.toLowerCase();
+}
+
+/* ── shared RPC infra (same pattern as my-souls.html) ── */
+async function reliableProvider(){
+  if(READ_PROVIDER) return READ_PROVIDER;
+  for(const url of RPCS){ try{ const p=new ethers.JsonRpcProvider(url); await p.getBlockNumber(); READ_PROVIDER=p; return p; }catch(e){} }
+  throw new Error("no rpc");
+}
+async function getLogsChunked(p, filter, toBlock){
+  const top = toBlock ?? await p.getBlockNumber();
+  try{ return await p.getLogs({...filter, fromBlock:DEPLOY_BLOCK, toBlock:top}); }
+  catch{
+    let out=[];
+    for(let from=DEPLOY_BLOCK; from<=top; from+=9000){
+      const to=Math.min(from+8999, top);
+      out=out.concat(await p.getLogs({...filter, fromBlock:from, toBlock:to}));
+    }
+    return out;
+  }
+}
+
+/* ── sessionStorage cache (per key) ── */
+async function cache(key, ttl, producer){
+  try{ const raw=sessionStorage.getItem(key); if(raw){ const o=JSON.parse(raw); if(Date.now()-o.t<ttl) return o.v; } }catch{}
+  const v=await producer();
+  try{ sessionStorage.setItem(key, JSON.stringify({t:Date.now(), v})); }catch{}
+  return v;
+}
+async function mapLimit(items, limit, fn){
+  const it=items[Symbol.iterator](); const run=async()=>{ for(let n=it.next(); !n.done; n=it.next()) await fn(n.value); };
+  await Promise.all(Array.from({length:Math.min(limit, items.length||1)}, run));
+}
+
+async function getRarity(){
+  return cache("csgov:rarity", 30*60*1000, async ()=>{
+    try{ const r=await fetch(MH_RARITY_URL,{cache:"no-store"}); if(!r.ok) return null;
+      const j=await r.json(); return (j && typeof j.tiers==="string") ? j : null; }catch{ return null; }
+  });
+}
+async function getCohorts(p, ids){
+  // cohortOf is immutable once a soul is freed → safe to cache globally
+  const cached = await cache("csgov:cohorts", 30*60*1000, async ()=>{
+    const iface=new ethers.Interface(MH_COHORT_ABI);
+    const mc=new ethers.Contract(MULTICALL3, MC_ABI, p);
+    const out={};
+    for(let i=0;i<ids.length;i+=100){
+      const chunk=ids.slice(i,i+100);
+      const calls=chunk.map(id=>({target:SOULS, callData:iface.encodeFunctionData("cohortOf",[id])}));
+      const res=await mc.tryAggregate(false, calls);
+      res.forEach(({success,returnData},j)=>{ out[chunk[j]] = success ? Number(iface.decodeFunctionResult("cohortOf",returnData)[0]) : 3; });
+    }
+    return out;
+  });
+  const m=new Map(); for(const k in cached) m.set(Number(k), cached[k]); return m;
+}
+async function getBlockTimestamps(p, blocks){
+  let store={};
+  try{ const raw=sessionStorage.getItem("csgov:blockts"); if(raw){ store=JSON.parse(raw).v||{}; } }catch{}
+  const need=blocks.filter(b=>!(b in store));
+  await mapLimit(need, 10, async b=>{ try{ const blk=await p.getBlock(b); if(blk) store[b]=blk.timestamp; }catch{} });
+  try{ sessionStorage.setItem("csgov:blockts", JSON.stringify({t:Date.now(), v:store})); }catch{}
+  const m=new Map(); blocks.forEach(b=>{ if(b in store) m.set(b, store[b]); }); return m;
+}
+
+/* ════════ MH AT BLOCK B — port of my-souls.html, bounded at block B ════════
+   Returns { tsB, mh:{ <wallet>: {mh, rate, freed, held, lib, mult} } }. */
+async function mhAtBlock(p, B){
+  return cache("csgov:mh:"+B, 30*60*1000, async ()=>{
+    const blk = await p.getBlock(B);
+    const tsB = blk ? blk.timestamp : Math.floor(Date.now()/1000);
+
+    const transfer = ethers.id("Transfer(address,address,uint256)");
+    const logs = await getLogsChunked(p, {address:SOULS, topics:[transfer]}, B);
+    const xfers = logs
+      .map(l=>[Number(l.blockNumber), Number(l.index),
+        "0x"+l.topics[1].slice(26).toLowerCase(), "0x"+l.topics[2].slice(26).toLowerCase(),
+        Number(BigInt(l.topics[3]))])
+      .sort((a,b)=> a[0]-b[0] || a[1]-b[1]);
+
+    // last transfer (≤ B) per token, and souls freed (mints) per wallet (≤ B)
+    const lastXfer=new Map(), freedBy=new Map();
+    for(const [block,index,from,to,id] of xfers){
+      lastXfer.set(id,{from,to,block});
+      if(from===ZERO40) freedBy.set(to,(freedBy.get(to)||0)+1);
+    }
+    // holdings at block B (current owner = destination of last transfer, not burned)
+    const holdings=new Map();
+    for(const [id,x] of lastXfer){ if(x.to===ZERO40) continue; if(!holdings.has(x.to)) holdings.set(x.to,[]); holdings.get(x.to).push(id); }
+
+    const allIds=[...new Set([].concat(...holdings.values()))];
+    const [rarity, cohorts, blockTs] = await Promise.all([
+      getRarity(),
+      getCohorts(p, allIds),
+      getBlockTimestamps(p, [...new Set(allIds.map(id=>lastXfer.get(id).block))]),
+    ]);
+    const rMult = Array.isArray(rarity?.tierMultipliers) ? rarity.tierMultipliers : MH_RARITY_FALLBACK;
+    const tierOfId = id => rarity ? (Number(rarity.tiers[id-1])||0) : 0;
+    const tokenRate = id => MH_BASE * (MH_COHORT_MULT[cohorts.get(id)??3] ?? 1.0) * (rMult[tierOfId(id)] ?? 1.0);
+    const acqTs = id => { const b=lastXfer.get(id).block; const t=blockTs.get(b); return t ?? tsB; };
+
+    const mh={};
+    for(const [w,ids] of holdings){
+      let rate=0, sum=0;
+      for(const id of ids){ const r=tokenRate(id); rate+=r; sum += r*Math.max(0,(tsB-acqTs(id))/3600); }
+      const lib=libOf(freedBy.get(w)||0);
+      mh[w] = { mh:sum*lib.mult, rate:rate*lib.mult, freed:freedBy.get(w)||0, held:ids.length, lib:lib.name, mult:lib.mult };
+    }
+    return { tsB, mh };
+  });
+}
+
+/* ════════ CONNECT (injected wallet, mainnet) ════════ */
+$("#connect").onclick = connect;
+async function connect(){
+  if(!window.ethereum) return toast("No wallet found — install MetaMask or Rabby.");
+  try{
+    const bp=new ethers.BrowserProvider(window.ethereum);
+    await bp.send("eth_requestAccounts",[]);
+    const net=await bp.getNetwork();
+    if(net.chainId!==1n){
+      try{ await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x1"}]}); }
+      catch{ return toast("Please switch your wallet to Ethereum mainnet."); }
+    }
+    ACCOUNT=(await (await new ethers.BrowserProvider(window.ethereum).getSigner()).getAddress()).toLowerCase();
+    $("#bar").innerHTML = `<span class="pill"><span class="dot"></span><b>${short(ACCOUNT)}</b><span class="mh" id="barmh"></span></span>`;
+    renderProposals(); // re-render to mark your votes + enable voting
+  }catch(e){ toast(`Connection failed: ${e.shortMessage||e.message}`); }
+}
+
+/* ════════ VOTE (sign the canonical message → POST to the mailbox) ════════ */
+async function castVote(prop, choiceIdx){
+  if(Date.now() >= Date.parse(prop.closesAt)) return toast("Voting has closed for this proposal.");
+  if(!ACCOUNT){ await connect(); if(!ACCOUNT) return; }
+  const msg = govMessage(prop.id, choiceIdx, prop.snapshotBlock, ACCOUNT);
+  let sig;
+  try{
+    const signer = await new ethers.BrowserProvider(window.ethereum).getSigner();
+    sig = await signer.signMessage(msg);
+  }catch(e){ return toast("Signature cancelled."); }
+  try{
+    const r = await fetch("/api/govern/vote",{
+      method:"POST", headers:{"content-type":"application/json"},
+      body:JSON.stringify({proposalId:prop.id, choice:choiceIdx, address:ACCOUNT, sig}),
+    });
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok) return toast(`Vote rejected: ${j.error||r.status}`);
+    toast("Vote recorded — the museum heard you 🏛");
+    tally(prop, true); // refresh this proposal's count
+  }catch(e){ toast("Couldn't reach the ballot box — try again."); }
+}
+
+/* ════════ RENDER ════════ */
+function badgeFor(prop){
+  const isTest = /(^|\W)TEST(\W|$)/i.test(prop.title);
+  const closed = Date.now() >= Date.parse(prop.closesAt);
+  let b = `<span class="badge ${prop.type==="EXEC"?"exec":"info"}">${prop.type||"INFO"}${prop.type==="EXEC"?" · soon":""}</span>`;
+  if(isTest) b += `<span class="badge test">Test</span>`;
+  if(closed) b += `<span class="badge closed">Closed</span>`;
+  return b;
+}
+function countdownText(closesAt){
+  const ms = Date.parse(closesAt) - Date.now();
+  if(ms<=0) return "Voting closed";
+  const d=Math.floor(ms/86400000), h=Math.floor(ms/3600000)%24, m=Math.floor(ms/60000)%60;
+  return `Closes in ${d}d ${h}h ${m}m`;
+}
+
+function renderProposals(){
+  const wrap = $("#proposals");
+  if(!PROPOSALS.length){ wrap.innerHTML = `<p class="status">No proposals are open right now. The museum is quiet.</p>`; return; }
+  wrap.innerHTML = PROPOSALS.map(prop=>`
+    <div class="card" id="card-${prop.id}">
+      <div class="head">${badgeFor(prop)}<h2>${escapeHtml(prop.title)}</h2></div>
+      <div class="body">${escapeHtml(prop.body)}</div>
+      <div class="meta">
+        <span class="countdown" data-closes="${prop.closesAt}">${countdownText(prop.closesAt)}</span>
+        <span>Snapshot block <b>${prop.snapshotBlock.toLocaleString("en-US")}</b></span>
+      </div>
+      <div class="options" id="opts-${prop.id}">
+        ${prop.options.map((o,i)=>`
+          <div class="opt" role="button" tabindex="0" data-prop="${prop.id}" data-choice="${i}" aria-disabled="${Date.now()>=Date.parse(prop.closesAt)}">
+            <div class="fill" id="fill-${prop.id}-${i}"></div>
+            <div class="fg">
+              <div class="radio"></div>
+              <div class="label">${escapeHtml(o)}<div class="sub" id="sub-${prop.id}-${i}"></div></div>
+              <div class="pct" id="pct-${prop.id}-${i}">—</div>
+            </div>
+          </div>`).join("")}
+      </div>
+      <div class="tallyline" id="tallyline-${prop.id}"><span class="status">Reading the ballot box…</span></div>
+      <div class="grey-list" id="grey-${prop.id}"></div>
+    </div>`).join("");
+
+  // wire clicks
+  wrap.querySelectorAll(".opt").forEach(el=>{
+    const handler=()=>{
+      const prop=PROPOSALS.find(p=>p.id===el.dataset.prop);
+      if(Date.now()>=Date.parse(prop.closesAt)) return;
+      castVote(prop, Number(el.dataset.choice));
+    };
+    el.addEventListener("click", handler);
+    el.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); handler(); } });
+  });
+
+  PROPOSALS.forEach(prop=>tally(prop));
+}
+
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* ════════ TALLY — verify each signature, weight by MH at snapshot ════════ */
+async function tally(prop, bust){
+  const line = $("#tallyline-"+prop.id);
+  try{
+    const url = "/api/govern/votes?id="+encodeURIComponent(prop.id) + (bust?("&_="+Date.now()):"");
+    const res = await fetch(url, {cache:"no-store"});
+    const data = await res.json();
+    const votes = data.votes || {};
+
+    // 1) verify signatures against the canonical message
+    const valid=[], bad=[];
+    for(const [addr, v] of Object.entries(votes)){
+      const msg = govMessage(prop.id, v.choice, prop.snapshotBlock, addr);
+      let rec=null; try{ rec = ethers.verifyMessage(msg, v.sig).toLowerCase(); }catch{}
+      if(rec && rec===addr.toLowerCase() && Number.isInteger(v.choice) && v.choice>=0 && v.choice<prop.options.length)
+        valid.push({addr:addr.toLowerCase(), choice:v.choice});
+      else bad.push(addr);
+    }
+
+    // 2) MH weights at the snapshot block
+    const p = await reliableProvider();
+    const {mh} = await mhAtBlock(p, prop.snapshotBlock);
+    const weightOf = a => (mh[a] && mh[a].mh) ? mh[a].mh : 0;
+
+    // 3) aggregate
+    const weight = new Array(prop.options.length).fill(0);
+    const voters = new Array(prop.options.length).fill(0);
+    const standing = [], noStanding = [];
+    let mine = null;
+    for(const {addr, choice} of valid){
+      const w = weightOf(addr);
+      if(w>0){ weight[choice]+=w; voters[choice]++; standing.push(addr); }
+      else noStanding.push(addr);
+      if(ACCOUNT && addr===ACCOUNT) mine = choice;
+    }
+    const total = weight.reduce((a,b)=>a+b,0);
+
+    // 4) paint bars
+    prop.options.forEach((_,i)=>{
+      const pct = total>0 ? (weight[i]/total*100) : 0;
+      const fill=$(`#fill-${prop.id}-${i}`), pctEl=$(`#pct-${prop.id}-${i}`), subEl=$(`#sub-${prop.id}-${i}`);
+      if(fill) fill.style.width = pct.toFixed(1)+"%";
+      if(pctEl) pctEl.textContent = total>0 ? pct.toFixed(1)+"%" : "0%";
+      if(subEl) subEl.innerHTML = `${voters[i]} voter${voters[i]===1?"":"s"} · ${fmt(weight[i])} MH` + (mine===i?` · <span class="youtag">your vote</span>`:"");
+      const optEl = $(`#opts-${prop.id}`).children[i];
+      if(optEl) optEl.classList.toggle("mine", mine===i);
+    });
+
+    // 5) footer + grey list
+    line.innerHTML = `<span><b>${standing.length}</b> voting · <b>${fmt(total)}</b> MH cast</span>`
+      + `<span>${bad.length?`${bad.length} invalid discarded · `:""}${noStanding.length} with no standing</span>`;
+    const grey = $("#grey-"+prop.id);
+    if(noStanding.length){
+      grey.innerHTML = `<div class="gl-head">No standing at snapshot (0 MH — counted but weightless)</div>`
+        + noStanding.map(a=>short(a)).join(" · ");
+    } else grey.innerHTML = "";
+
+    // your MH in the top pill
+    if(ACCOUNT){ const bm=$("#barmh"); if(bm) bm.textContent = `${fmt(weightOf(ACCOUNT))} MH @ snapshot`; }
+  }catch(e){
+    line.innerHTML = `<span class="status err">Couldn't read the count right now — try again shortly.</span>`;
+  }
+}
+
+/* ════════ VERIFY-YOURSELF PANEL ════════ */
+function renderVerify(){
+  const sample = PROPOSALS[0];
+  const exId = sample ? sample.id : "prop-000";
+  const exBlock = sample ? sample.snapshotBlock : 0;
+  const msgExample = govMessage(exId, 0, exBlock, "0xYOUR_WALLET_ADDRESS");
+  $("#verifybody").innerHTML = `
+    <p>Nothing here is taken on trust. The server only stores signed ballots — every signature is checked, and every vote is weighted, right here in your browser over public data. Reproduce it yourself:</p>
+    <ol>
+      <li><b>Get the raw ballots.</b> Each proposal's box is public JSON:
+        ${PROPOSALS.map(p=>`<br><a href="/api/govern/votes?id=${encodeURIComponent(p.id)}" target="_blank" rel="noopener"><code>/api/govern/votes?id=${escapeHtml(p.id)}</code></a>`).join("")}
+      </li>
+      <li><b>Check each signature.</b> A ballot counts only if its signature recovers to the same address it's filed under. The exact message that was signed (EIP-191 <code>personal_sign</code>, <code>\\n</code> separators, address lowercased):
+        <pre>${escapeHtml(msgExample)}</pre>
+        Recover with <code>ethers.verifyMessage(message, sig)</code> and compare to the address. Anything that doesn't match is thrown away.
+      </li>
+      <li><b>Weight by Museum Hours at the snapshot block.</b> For every valid voter, compute their wallet's MH as of the proposal's snapshot block — the same formula as the <a href="/my-souls?mh=1">Museum Hours</a> preview, evaluated at that block:
+        <ul>
+          <li>per-soul rate/hour = <code>${MH_BASE.toFixed(1)}</code> × cohort (OG ×2.0 · Era I ×1.5 · Era II ×1.25 · III–IV ×1.0) × rarity tier (×1.0–×2.0, from <a href="${MH_RARITY_URL}" target="_blank" rel="noopener">rarity.json</a>)</li>
+          <li>wallet MH = liberator multiplier (≥50 freed ×1.3 · ≥20 ×1.2 · ≥5 ×1.1 · ≥1 ×1.05) × Σ (rate/hour × hours held), where hours run from each soul's acquisition up to the timestamp of the snapshot block</li>
+          <li>only Transfers with <code>blockNumber ≤ snapshot</code> are used; buying a soul does not inherit the previous owner's hours</li>
+        </ul>
+      </li>
+      <li><b>Sum by option.</b> Each option's share = its MH ÷ total MH cast. Wallets with 0 MH at the snapshot are listed but carry no weight. That's the whole count.</li>
+    </ol>
+    <p style="opacity:.75">Diamond <code>${SOULS}</code> · Ethereum mainnet · deploy block ${DEPLOY_BLOCK.toLocaleString("en-US")}. The canonical MH engine lives in <code>my-souls.html</code>.</p>`;
+}
+
+/* ════════ live countdown tick ════════ */
+setInterval(()=>{
+  document.querySelectorAll(".countdown").forEach(el=>{ el.textContent = countdownText(el.dataset.closes); });
+}, 30000);
+
+/* ════════ BOOT ════════ */
+async function boot(){
+  try{
+    const r = await fetch("/govern/proposals.json", {cache:"no-store"});
+    PROPOSALS = await r.json();
+  }catch{ PROPOSALS = []; }
+  renderProposals();
+  renderVerify();
+
+  if(window.ethereum){
+    window.ethereum.on?.("accountsChanged", ()=>location.reload());
+    window.ethereum.on?.("chainChanged", ()=>location.reload());
+    window.ethereum.request({method:"eth_accounts"}).then(a=>{ if(a&&a.length) connect(); }).catch(()=>{});
+  }
+}
+boot();
+</script>
+</body>
+</html>
