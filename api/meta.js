@@ -20,6 +20,31 @@ const LORE =
   "Each Cubist Soul exists because its holder burned the original canvas on Ethereum, an irreversible act of liberation. " +
   "The soul kept its number, and the face it wore in the canvas that held it.";
 
+// Cohort (era in which the soul was freed) is read straight from the diamond.
+// 0 = OG (the earliest movers, freed before the timed sale), 1..4 = Era I..IV.
+// Until the tiered burn facet is live, cohortOf() reverts and every soul is an OG.
+const SOULS = "0x9252fdc0b3945203314ea1a9b8d64345bc868406";
+const COHORT_SELECTOR = "0xd5b0e035"; // cohortOf(uint256)
+const RPCS = [
+  "https://gateway.tenderly.co/public/mainnet",
+  "https://ethereum-rpc.publicnode.com",
+  "https://eth.llamarpc.com",
+];
+const COHORT_NAMES = ["OG", "Era I", "Era II", "Era III", "Era IV"];
+
+async function cohortName(id) {
+  const data = COHORT_SELECTOR + id.toString(16).padStart(64, "0");
+  const payload = JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_call", params: [{ to: SOULS, data }, "latest"] });
+  for (const rpc of RPCS) {
+    try {
+      const r = await fetch(rpc, { method: "POST", headers: { "content-type": "application/json" }, body: payload, signal: AbortSignal.timeout(5000) });
+      const j = await r.json();
+      if (j && j.result && j.result !== "0x") return COHORT_NAMES[parseInt(j.result, 16)] || "OG";
+    } catch {}
+  }
+  return "OG"; // facet not live yet, or RPC unavailable — every current soul is an OG
+}
+
 export const config = { maxDuration: 60 };
 
 async function fetchJson(url) {
@@ -53,10 +78,12 @@ export default async function handler(req, res) {
     // image; OpenSea will pick up traits on its next refresh.
   }
 
+  const cohort = await cohortName(id);
   attributes = [
     ...attributes,
     { trait_type: "Origin", value: `Pikkazo Canvas #${id}` },
     { trait_type: "Status", value: "Freed" },
+    { trait_type: "Cohort", value: cohort },
   ];
 
   const body = {
