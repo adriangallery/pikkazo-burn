@@ -100,6 +100,64 @@
   .topnav .links a{color:var(--mute); font-family:"Space Mono",ui-monospace,monospace; font-size:12px; letter-spacing:.05em; text-transform:uppercase; text-decoration:none; padding:6px 9px; border-radius:6px; white-space:nowrap}
   .topnav .links a:hover,.topnav .links a[aria-current]{color:var(--gild); background:rgba(224,165,32,.12)}
   @media(max-width:520px){ .topnav .brand span{display:none} .topnav .links a{padding:6px 7px; font-size:11px; letter-spacing:.02em} }
+
+  /* ───── Museum Hours (hidden preview, ?mh=1 only) ───── */
+  #mh{max-width:1080px; margin:6px auto 0; padding:0 20px}
+  #mh .mh-head{text-align:center; margin:56px 0 6px}
+  #mh .mh-title{font-family:"Big Shoulders Display",Impact,sans-serif; font-weight:800; text-transform:uppercase; font-size:clamp(30px,7vw,54px); color:var(--bone); line-height:.92; margin:0; text-shadow:0 4px 20px rgba(0,0,0,.4)}
+  #mh .mh-sub{font-style:italic; color:var(--bone); opacity:.85; font-size:clamp(14px,2.1vw,17px); max-width:520px; margin:10px auto 0}
+  #mh .mh-secret{font-family:"Space Mono",monospace; font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--gild); opacity:.75; margin-top:12px}
+
+  /* hero counter */
+  #mh .mh-hero{position:relative; margin:26px auto 0; max-width:680px; text-align:center;
+    background:linear-gradient(180deg, rgba(224,165,32,.16), rgba(224,165,32,.04));
+    border:1px solid rgba(224,165,32,.45); border-radius:14px; padding:34px 26px 30px;
+    box-shadow:0 20px 50px rgba(0,0,0,.4)}
+  #mh .mh-hero .cap{font-family:"Space Mono",monospace; font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--gild)}
+  #mh .mh-count{font-family:"Big Shoulders Display",sans-serif; font-weight:800; color:var(--bone); font-size:clamp(52px,15vw,110px); line-height:.92; letter-spacing:.01em; margin:6px 0 0; text-shadow:0 4px 24px rgba(0,0,0,.45); font-variant-numeric:tabular-nums}
+  #mh .mh-count .unit{font-size:.32em; color:var(--gild); letter-spacing:.12em; margin-left:.18em; vertical-align:.28em}
+  #mh .mh-rate{font-family:"Space Mono",monospace; font-size:14px; color:var(--gild); margin-top:4px; font-weight:700}
+  #mh .mh-mult{display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:16px}
+  #mh .mh-chip{font-family:"Space Mono",monospace; font-size:11px; color:var(--bone); background:rgba(0,0,0,.28); border:1px solid var(--ash); padding:7px 12px; border-radius:999px; letter-spacing:.02em}
+  #mh .mh-chip b{color:var(--gild)}
+
+  /* exhibits */
+  #mh .mh-exhibits{display:grid; gap:16px; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); margin-top:8px}
+  #mh .exhibit{background:var(--smoke); border:1px solid var(--gild-deep); border-radius:12px; overflow:hidden; box-shadow:0 10px 26px rgba(0,0,0,.4); display:flex; flex-direction:column; transition:.18s ease}
+  #mh .exhibit:hover{transform:translateY(-3px); border-color:var(--gild)}
+  #mh .exhibit img{width:100%; aspect-ratio:1; object-fit:cover; display:block; background:#140406}
+  #mh .exhibit .plaque{padding:12px 13px 14px; border-top:1px solid rgba(224,165,32,.22)}
+  #mh .exhibit .pl-id{font-family:"Big Shoulders Display",sans-serif; font-weight:800; text-transform:uppercase; font-size:20px; color:var(--bone); line-height:1}
+  #mh .exhibit .pl-rate{font-family:"Space Mono",monospace; font-size:12px; color:var(--gild); margin-top:3px; font-weight:700}
+  #mh .exhibit .seals{display:flex; gap:6px; flex-wrap:wrap; margin-top:10px}
+  #mh .seal{font-family:"Space Mono",monospace; font-size:10px; letter-spacing:.04em; padding:4px 8px; border-radius:5px; background:rgba(224,165,32,.1); border:1px solid rgba(224,165,32,.3); color:var(--bone)}
+  #mh .seal.cohort{background:rgba(196,76,82,.16); border-color:rgba(196,76,82,.4)}
+  #mh .exhibit .pl-rank{font-family:"Space Mono",monospace; font-size:10px; color:var(--mute); margin-top:8px; letter-spacing:.03em}
+
+  /* leaderboard */
+  #mh .mh-board{max-width:680px; margin:0 auto; background:rgba(20,4,8,.4); border:1px solid rgba(224,165,32,.3); border-radius:12px; overflow:hidden}
+  #mh .lb-row{display:grid; grid-template-columns:44px 1fr auto; align-items:center; gap:10px; padding:11px 16px; border-bottom:1px solid rgba(224,165,32,.12); font-family:"Space Mono",monospace; font-size:13px}
+  #mh .lb-row:last-child{border-bottom:none}
+  #mh .lb-row .rk{color:var(--gild); font-weight:700}
+  #mh .lb-row .addr{color:var(--mute); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  #mh .lb-row .mh{color:var(--bone); font-weight:700; text-align:right; font-variant-numeric:tabular-nums}
+  #mh .lb-row.me{background:linear-gradient(90deg, rgba(224,165,32,.18), rgba(224,165,32,.05)); border-top:1px solid var(--gild); border-bottom:1px solid var(--gild)}
+  #mh .lb-row.me .addr{color:var(--bone)}
+  #mh .lb-row.me .addr::after{content:" · you"; color:var(--gild)}
+  #mh .lb-gap{text-align:center; color:var(--mute); font-family:"Space Mono",monospace; font-size:14px; padding:6px 0; letter-spacing:.3em}
+
+  /* badges */
+  #mh .mh-badges{display:grid; gap:12px; grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+  #mh .ach{position:relative; background:rgba(20,4,8,.4); border:1px solid rgba(224,165,32,.28); border-radius:10px; padding:16px 15px; text-align:center}
+  #mh .ach.earned{background:linear-gradient(180deg, rgba(224,165,32,.14), rgba(224,165,32,.04)); border-color:rgba(224,165,32,.5)}
+  #mh .ach.locked{opacity:.55; filter:grayscale(.4)}
+  #mh .ach .ico{font-size:30px; line-height:1}
+  #mh .ach .nm{font-family:"Big Shoulders Display",sans-serif; font-weight:800; text-transform:uppercase; font-size:16px; color:var(--bone); margin-top:8px; line-height:1}
+  #mh .ach.earned .nm{color:var(--gild)}
+  #mh .ach .ds{font-family:"Space Mono",monospace; font-size:10.5px; color:var(--mute); margin-top:5px; line-height:1.4}
+  #mh .mh-status{text-align:center; color:#dcc6bf; font-size:15px; line-height:1.7; padding:30px 16px; font-style:italic}
+  #mh .mh-cta{text-align:center; padding:24px 0}
+  @media(max-width:560px){ #mh .lb-row{grid-template-columns:36px 1fr auto; font-size:12px; padding:10px 12px} }
 </style>
 </head>
 <body>
@@ -147,6 +205,10 @@ const $ = s => document.querySelector(s);
 const content = $("#content");
 const IMG = id => `/api/img?id=${id}`;
 let CARD_STATS = null; // {freed, rank, total, held, tier} — used to draw the shareable card
+
+// Museum Hours — hidden gamified preview. ONLY active with ?mh=1 in the URL.
+// Without the flag NOTHING below runs: no DOM, no extra requests, no logs.
+const MH_ENABLED = new URLSearchParams(location.search).get("mh") === "1";
 
 function toast(msg, ms=6000){
   document.querySelectorAll(".toast").forEach(t=>t.remove());
@@ -242,6 +304,8 @@ async function loadSouls(account){
   const owned = candidates.filter(id=>owners.get(id)===account).sort((a,b)=>a-b);
 
   render(account, freed, rank, totalLibs, owned);
+
+  if(MH_ENABLED) mhBuild({account, provider:p, owned, freed}).catch(mhError);
 }
 
 function render(account, freed, rank, totalLibs, owned){
@@ -351,6 +415,236 @@ document.addEventListener("click", e=>{
   if(e.target.closest("#shareCard")) shareCard();
   else if(e.target.closest("#dlCard")) downloadCard();
 });
+
+/* ════════════════════ MUSEUM HOURS (hidden preview, ?mh=1) ════════════════════
+   Soft-staking preview. Every piece of code in this block only runs when the
+   ?mh=1 flag is present (guarded by MH_ENABLED and mhInit()). Reuses the same
+   RPC infra, Multicall3, styles and fonts as the rest of the page.
+
+   FORMULA (constants below):
+     per-soul rate/h = MH_BASE(1) × cohortMult × rarityMult
+     wallet MH       = liberatorMult × Σ (rate/h × hoursHeld)   [held since the
+                       block of the current owner's last incoming Transfer]
+     wallet rate/h   = liberatorMult × Σ rate/h
+   Buying a soul does NOT inherit the previous owner's hours. */
+const MH_BASE          = 1.0;                          // MH per soul, per hour held
+const MH_COHORT_MULT   = [2.0, 1.5, 1.25, 1.0, 1.0];   // OG · Era I · Era II · Era III · Era IV
+const MH_COHORT_NAME   = ["OG","Era I","Era II","Era III","Era IV"];
+const MH_RARITY_FALLBACK_MULT = [1.0, 1.15, 1.3, 1.5, 2.0];
+const MH_LIB_TIERS = [                                  // wallet-wide multiplier by souls freed
+  {min:50, name:"Founding Patron", mult:1.3},
+  {min:20, name:"Patron",          mult:1.2},
+  {min:5,  name:"Curator",         mult:1.1},
+  {min:1,  name:"Liberator",       mult:1.05},
+  {min:0,  name:"Visitor",         mult:1.0},
+];
+const MH_ZERO40 = "0x" + "0".repeat(40);
+const MH_RARITY_URL = "https://raw.githubusercontent.com/adriangallery/cubist-souls-assets/main/rarity/rarity.json";
+const MH_COHORT_ABI = ["function cohortOf(uint256) view returns (uint8)"];
+const MH_TTL = 5*60*1000;
+function mhLibOf(freed){ return MH_LIB_TIERS.find(t=>freed>=t.min); }
+let mhRaf=0, mhInt=0, mhStarted=false;
+
+const mhNum = v => (v||0).toLocaleString("en-US",{minimumFractionDigits:2, maximumFractionDigits:2});
+const mhShort = w => `${w.slice(0,6)}…${w.slice(-4)}`;
+
+function mhBody(){ return document.getElementById("mh-body"); }
+function mhError(){ const b=mhBody(); if(b) b.innerHTML = `<p class="mh-status">The museum's records are unavailable right now. Try again shortly.</p>`; }
+
+async function mhCache(key, ttl, producer){
+  try{ const raw=sessionStorage.getItem(key); if(raw){ const o=JSON.parse(raw); if(Date.now()-o.t<ttl) return o.v; } }catch{}
+  const v=await producer();
+  try{ sessionStorage.setItem(key, JSON.stringify({t:Date.now(), v})); }catch{}
+  return v;
+}
+async function mhMapLimit(items, limit, fn){
+  const it=items[Symbol.iterator](); const run=async()=>{ for(let n=it.next(); !n.done; n=it.next()) await fn(n.value); };
+  await Promise.all(Array.from({length:Math.min(limit,items.length||1)}, run));
+}
+
+async function mhGetRarity(){
+  return mhCache("mh:rarity", 10*60*1000, async ()=>{
+    try{ const r=await fetch(MH_RARITY_URL,{cache:"no-store"}); if(!r.ok) return null;
+      const j=await r.json(); return (j && typeof j.tiers==="string") ? j : null; }catch{ return null; }
+  });
+}
+async function mhGetTransfers(p){
+  return mhCache("mh:xfers", MH_TTL, async ()=>{
+    const transfer=ethers.id("Transfer(address,address,uint256)");
+    const logs=await getLogsChunked(p, {address:SOULS, topics:[transfer]});
+    return logs.map(l=>[Number(l.blockNumber), Number(l.index),
+      "0x"+l.topics[1].slice(26).toLowerCase(), "0x"+l.topics[2].slice(26).toLowerCase(),
+      Number(BigInt(l.topics[3]))]);
+  });
+}
+async function mhGetCohorts(p, ids){
+  const cached = await mhCache("mh:cohorts", MH_TTL, async ()=>{
+    const iface=new ethers.Interface(MH_COHORT_ABI);
+    const mc=new ethers.Contract(MULTICALL3, MC_ABI, p);
+    const out={};
+    for(let i=0;i<ids.length;i+=100){
+      const chunk=ids.slice(i,i+100);
+      const calls=chunk.map(id=>({target:SOULS, callData:iface.encodeFunctionData("cohortOf",[id])}));
+      const res=await mc.tryAggregate(false, calls);
+      res.forEach(({success,returnData},j)=>{ out[chunk[j]] = success ? Number(iface.decodeFunctionResult("cohortOf",returnData)[0]) : 3; });
+    }
+    return out;
+  });
+  const m=new Map(); for(const k in cached) m.set(Number(k), cached[k]); return m;
+}
+async function mhGetBlockTimestamps(p, blocks){
+  let cache={};
+  try{ const raw=sessionStorage.getItem("mh:blockts"); if(raw){ const o=JSON.parse(raw); cache=o.v||{}; } }catch{}
+  const need=blocks.filter(b=>!(b in cache));
+  await mhMapLimit(need, 10, async b=>{ try{ const blk=await p.getBlock(b); if(blk) cache[b]=blk.timestamp; }catch{} });
+  try{ sessionStorage.setItem("mh:blockts", JSON.stringify({t:Date.now(), v:cache})); }catch{}
+  const m=new Map(); blocks.forEach(b=>{ if(b in cache) m.set(b, cache[b]); }); return m;
+}
+
+function mhStartTicker(base, rate){
+  const el=document.querySelector("#mh-count .v"); if(!el) return;
+  const t0=performance.now();
+  const reduced=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  const frame=()=>{ el.textContent = mhNum(base + rate*((performance.now()-t0)/3600000)); if(!reduced) mhRaf=requestAnimationFrame(frame); };
+  if(mhRaf) cancelAnimationFrame(mhRaf);
+  if(mhInt) clearInterval(mhInt);
+  frame();
+  if(reduced) mhInt=setInterval(frame, 1000);
+}
+
+async function mhBuild(ctx){
+  const { account, provider:p, owned, freed } = ctx;
+  const b=mhBody(); if(!b) return;
+  b.innerHTML = `<p class="mh-status">Reading the museum ledger…</p>`;
+
+  const [rarity, xfers] = await Promise.all([ mhGetRarity(), mhGetTransfers(p) ]);
+
+  // derive current owner + acquisition block per token, and souls freed per wallet
+  const lastXfer=new Map(), freedBy=new Map();
+  for(const [block,index,from,to,id] of xfers.slice().sort((a,bb)=> a[0]-bb[0] || a[1]-bb[1])){
+    lastXfer.set(id,{from,to,block,index});
+    if(from===MH_ZERO40) freedBy.set(to,(freedBy.get(to)||0)+1);
+  }
+  const holdings=new Map();
+  for(const [id,x] of lastXfer){ if(x.to===MH_ZERO40) continue; (holdings.get(x.to)||holdings.set(x.to,[]).get(x.to)).push(id); }
+  // authoritative override for the connected wallet (ownerOf-derived set + verified freed count)
+  holdings.set(account, owned.slice());
+  freedBy.set(account, freed);
+
+  const allIds=[...new Set([].concat(...holdings.values()))];
+  const [cohorts, blockTs] = await Promise.all([
+    mhGetCohorts(p, allIds),
+    mhGetBlockTimestamps(p, [...new Set(allIds.map(id=> (lastXfer.get(id)||{}).block).filter(Boolean))]),
+  ]);
+  const now=Math.floor(Date.now()/1000);
+  const rMult = (Array.isArray(rarity?.tierMultipliers) ? rarity.tierMultipliers : MH_RARITY_FALLBACK_MULT);
+  const tierOfId = id => rarity ? (Number(rarity.tiers[id-1])||0) : 0;
+  const tokenRate = id => MH_BASE * (MH_COHORT_MULT[cohorts.get(id)??3] ?? 1.0) * (rMult[tierOfId(id)] ?? 1.0);
+  const acqTs = id => { const x=lastXfer.get(id); const ts=x?blockTs.get(x.block):null; return ts ?? now; };
+  function compute(ids, fr){
+    let rate=0, mh=0;
+    for(const id of ids){ const r=tokenRate(id); rate+=r; mh += r*Math.max(0,(now-acqTs(id))/3600); }
+    const lib=mhLibOf(fr||0);
+    return { ids, freed:fr||0, lib, rate:rate*lib.mult, mh:mh*lib.mult };
+  }
+  const board=[...holdings.entries()].map(([w,ids])=>({w, ...compute(ids, freedBy.get(w)||0)})).sort((a,bb)=>bb.mh-a.mh);
+  const meIdx=board.findIndex(r=>r.w===account);
+  const me = meIdx>=0 ? board[meIdx] : compute(owned, freed);
+
+  mhRender({ account, me, meIdx, board, owned, freed, rarity, cohorts, tokenRate, tierOfId, acqTs, now });
+}
+
+function mhRender(d){
+  const { account, me, meIdx, board, owned, freed, rarity, cohorts, tokenRate, tierOfId, acqTs, now } = d;
+
+  // hero multiplier chips
+  const chips = [
+    `<span class="mh-chip">Souls held <b>${me.ids.length}</b></span>`,
+    `<span class="mh-chip">Liberator <b>${me.lib.name}</b> ×${me.lib.mult}</span>`,
+    `<span class="mh-chip">Base <b>${MH_BASE.toFixed(1)}</b> MH / soul / hr</span>`,
+  ].join("");
+
+  // exhibits (connected wallet's held souls, ascending)
+  const exhibits = owned.length ? owned.map(id=>{
+    const co=cohorts.get(id)??3, tier=tierOfId(id);
+    const rankTxt = (rarity && Array.isArray(rarity.ranks) && rarity.ranks[id-1]!=null)
+      ? `Rarity rank #${Number(rarity.ranks[id-1]).toLocaleString("en-US")} of 10,000` : "";
+    const raritySeal = rarity
+      ? `<span class="seal">${(rarity.tierEmoji?.[tier]||"")} ${(rarity.tierNames?.[tier]||"Tier "+tier)}</span>` : "";
+    return `<div class="exhibit">
+      <img src="${IMG(id)}" loading="lazy" alt="Cubist Soul #${id}" />
+      <div class="plaque">
+        <div class="pl-id">Soul #${id}</div>
+        <div class="pl-rate">+${mhNum(tokenRate(id))} MH / hour</div>
+        <div class="seals"><span class="seal cohort">${MH_COHORT_NAME[co]}</span>${raritySeal}</div>
+        ${rankTxt?`<div class="pl-rank">${rankTxt}</div>`:""}
+      </div></div>`;
+  }).join("") : `<p class="mh-status" style="grid-column:1/-1">You hold no souls in this wallet right now — the clock only runs on souls you keep.</p>`;
+
+  // leaderboard: top 20 + connected wallet's own row
+  const lbRow=(n,r)=>`<div class="lb-row ${r.w===account?"me":""}"><span class="rk">#${n}</span><span class="addr">${mhShort(r.w)}</span><span class="mh">${mhNum(r.mh)} MH</span></div>`;
+  const top=board.slice(0,20);
+  let rows=top.map((r,i)=>lbRow(i+1,r)).join("");
+  if(meIdx>=20) rows += `<div class="lb-gap">···</div>` + lbRow(meIdx+1, board[meIdx]);
+  else if(meIdx<0) rows += `<div class="lb-gap">···</div>` + lbRow(board.length+1, {...me, w:account});
+
+  // achievements
+  const held=me.ids;
+  const ownsOG = held.some(id=>(cohorts.get(id)??3)===0);
+  const ownsMaster = !!rarity && held.some(id=>tierOfId(id)===4);
+  const oldest = held.length ? Math.max(...held.map(id=> now-acqTs(id))) : 0;
+  const ach = [
+    {ic:"🔥", nm:"Founding Liberator",       ds:"Freed at least one soul",   earned:freed>=1},
+    {ic:"💯", nm:"Century Club",             ds:"1,000+ Museum Hours",       earned:me.mh>=1000},
+    {ic:"🎩", nm:"Patron of the Arts",       ds:"Patron tier or above",     earned:freed>=20},
+    {ic:"🏺", nm:"Keeper of a Masterpiece",  ds:"Hold a Masterpiece soul",  earned:ownsMaster, hide:!rarity},
+    {ic:"🗿", nm:"OG Whisperer",             ds:"Hold an OG-era soul",      earned:ownsOG},
+    {ic:"📅", nm:"Week One",                 ds:"Kept a soul seven days",   earned:oldest>=7*86400},
+    {ic:"❓", nm:"???", ds:"The museum keeps its secrets.", locked:true},
+    {ic:"❓", nm:"???", ds:"The museum keeps its secrets.", locked:true},
+    {ic:"❓", nm:"???", ds:"The museum keeps its secrets.", locked:true},
+  ].filter(a=>!a.hide);
+  const achHtml = ach.map(a=>`<div class="ach ${a.locked?"locked":(a.earned?"earned":"")}" title="${a.locked?"The museum keeps its secrets.":a.ds}">
+    <div class="ico">${a.ic}</div><div class="nm">${a.nm}</div><div class="ds">${a.ds}</div></div>`).join("");
+
+  mhBody().innerHTML = `
+    <div class="mh-hero">
+      <div class="cap">Your Museum Hours</div>
+      <div class="mh-count" id="mh-count"><span class="v">${mhNum(me.mh)}</span><span class="unit">MH</span></div>
+      <div class="mh-rate">+${mhNum(me.rate)} MH / hour</div>
+      <div class="mh-mult">${chips}</div>
+    </div>
+    <div class="section-label">The exhibits · ${owned.length} soul${owned.length===1?"":"s"}</div>
+    <div class="mh-exhibits">${exhibits}</div>
+    <div class="section-label">Curators' board · top ${Math.min(20,board.length)} of ${board.length}</div>
+    <div class="mh-board">${rows}</div>
+    <div class="section-label">Your standing</div>
+    <div class="mh-badges">${achHtml}</div>
+    <p class="mh-status" style="padding-top:34px">The museum records every hour. Their purpose will be revealed.</p>`;
+
+  mhStartTicker(me.mh, me.rate);
+}
+
+function mhInit(){
+  if(mhStarted) return; mhStarted=true;
+  const main=document.querySelector("main"); if(!main) return;
+  main.insertAdjacentHTML("afterend", `
+    <section id="mh">
+      <div class="mh-head">
+        <h2 class="mh-title">🏛 Museum Hours</h2>
+        <p class="mh-sub">The museum records every hour its souls are kept. Their purpose will be revealed.</p>
+        <div class="mh-secret">Preview · the museum keeps its secrets</div>
+      </div>
+      <div id="mh-body">
+        <div class="mh-cta">
+          <p class="mh-status">Connect your wallet to see the hours you've kept.</p>
+          <button class="btn-connect" id="mh-connect">Connect Wallet</button>
+        </div>
+      </div>
+    </section>`);
+  const cb=document.getElementById("mh-connect"); if(cb) cb.onclick=connect;
+}
+if(MH_ENABLED) mhInit();
 
 if(window.ethereum){
   window.ethereum.on?.("accountsChanged", ()=>location.reload());
