@@ -239,14 +239,8 @@ function render(account, freed, rank, totalLibs, owned){
     <div class="section-label">Your collection · ${owned.length} soul${owned.length===1?"":"s"}</div>
     <div class="grid" id="soulgrid"></div>
     <div class="rewards">
-      <h3>Early movers get rewarded</h3>
-      <p>You reclaimed the collection when it mattered. Founding Liberators are first in line for what comes next.</p>
-      <div class="perks">
-        <span class="perk">🏛 Honor wall</span>
-        <span class="perk">💎 Staking rewards</span>
-        <span class="perk">🎟 Allowlist priority</span>
-      </div>
-      <span class="draft">Perks being finalized</span>
+      <h3>You were early</h3>
+      <p>You reclaimed the collection when it mattered. Founding Liberators won't be forgotten — more on that soon.</p>
     </div>`;
   const grid = $("#soulgrid");
   if(!owned.length){
@@ -263,6 +257,8 @@ function render(account, freed, rank, totalLibs, owned){
 if(window.ethereum){
   window.ethereum.on?.("accountsChanged", ()=>location.reload());
   window.ethereum.on?.("chainChanged", ()=>location.reload());
+  // Reconnect silently if the wallet already authorized this site (no popup).
+  window.ethereum.request({method:"eth_accounts"}).then(a=>{ if(a&&a.length) connect(); }).catch(()=>{});
 }
 </script>
 </body>

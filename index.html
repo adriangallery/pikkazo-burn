@@ -99,6 +99,12 @@
     font-size:13px; letter-spacing:.14em; text-transform:uppercase;
   }
   .freed b{color:var(--flame); font-weight:800; letter-spacing:.04em}
+
+  .meta-row{display:flex; gap:20px; justify-content:center; align-items:center; flex-wrap:wrap; margin:20px auto 0;
+    font-family:ui-monospace,Menlo,monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase}
+  .meta-row a{color:var(--gild); text-decoration:none}
+  .meta-row a:hover{color:var(--flame)}
+  .meta-row .freed{color:var(--mute); margin:0}
   .explore{
     margin:14px auto 0; text-align:center; font-size:12px; color:var(--mute);
     letter-spacing:.08em; text-transform:uppercase;
@@ -256,13 +262,12 @@
 <header>
   <h1>Burn Art</h1>
   <p class="sub">Burn a <b>Pikkazo</b>, get its <b>Cubist Soul</b> back — same number, original art recovered, minted straight to your wallet.</p>
-  <div class="gets">
-    <span>🔥 <b>Burn</b> your Pikkazo</span>
-    <span>✨ <b>Get</b> its Cubist Soul — same #, art recovered</span>
-    <span>🖼 <b>Own</b> it on <a href="https://opensea.io/collection/cubist-souls" target="_blank" rel="noopener">OpenSea</a></span>
+  <div class="meta-row">
+    <span class="freed" id="freed" hidden><b id="freedN"></b> / 10,000 freed</span>
+    <a href="/my-souls">✨ Your Souls</a>
+    <a href="/gallery">🖼 The Freed</a>
+    <a href="https://opensea.io/collection/cubist-souls" target="_blank" rel="noopener">◆ OpenSea</a>
   </div>
-  <div class="freed" id="freed" hidden>◆ <b id="freedN"></b> of 10,000 souls freed</div>
-  <div class="explore"><a href="/my-souls">✨ Your Souls</a> · <a href="/gallery">🖼 The Freed — gallery</a></div>
 </header>
 
 <main>
@@ -378,8 +383,7 @@ async function connect() {
     signer = await new ethers.BrowserProvider(window.ethereum).getSigner();
     account = await signer.getAddress();
     $("#bar").innerHTML =
-      `<span class="pill"><span class="dot"></span>${account.slice(0, 6)}…${account.slice(-4)}</span>` +
-      `<span class="pill">Your Pikkazos: <b id="count">…</b></span>`;
+      `<span class="pill"><span class="dot"></span>${account.slice(0, 6)}…${account.slice(-4)} · <b id="count">…</b> Pikkazos</span>`;
     await loadTokens();
   } catch (e) {
     toast(`Connection failed: ${e.shortMessage || e.message}`);
@@ -683,6 +687,8 @@ $("#burn").onclick = async () => {
 if (window.ethereum) {
   window.ethereum.on?.("accountsChanged", () => location.reload());
   window.ethereum.on?.("chainChanged", () => location.reload());
+  // Reconnect silently if the wallet already authorized this site (no popup).
+  window.ethereum.request({ method: "eth_accounts" }).then(a => { if (a && a.length) connect(); }).catch(() => {});
 }
 
 // Discreet "X of 10,000 souls freed" — reads totalSupply() with no wallet.
