@@ -174,6 +174,7 @@
   .collab-plaque .cx-p{font-family:"Space Mono",monospace; font-size:11px; color:var(--mute); margin-top:5px; letter-spacing:.02em}
 
   .soul-cell{position:relative}
+  .spark{vertical-align:-2px}
   .fire-btn{position:absolute; top:8px; right:8px; z-index:3; font-family:"Space Mono",monospace; font-weight:700;
     font-size:12px; letter-spacing:.02em; padding:7px 10px; border-radius:999px; cursor:pointer; text-transform:none;
     border:1px solid rgba(224,165,32,.55); background:rgba(20,4,8,.78); color:var(--gild);
@@ -390,13 +391,13 @@ function render(account, freed, rank, totalLibs, owned){
         <div class="stat"><b>${owned.length}</b>held now</div>
       </div>
       <div class="share-row">
-        <button id="shareCard" class="btn-share">🔥 Share on X</button>
+        <button id="shareCard" class="btn-share">Share on X</button>
         <button id="dlCard" class="btn-share ghost">⤓ Download card</button>
       </div>
     </div>
     <div class="collab-plaque">
-      <div class="cx-h">🔥 Cubist Souls × WTP! — every soul gets one free “Fire is fine”</div>
-      <div class="cx-p">Made with WTP! technology · one free generation per soul, forever</div>
+      <div class="cx-h"><svg class="spark" viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M12 2l2.3 7.7L22 12l-7.7 2.3L12 22l-2.3-7.7L2 12l7.7-2.3z"/></svg> Cubist Souls × WTP! — every soul gets one free “Fire is fine”</div>
+      <div class="cx-p">Tap the spark on a soul and WTP! paints a brand-new artwork from it. Your Soul itself is never touched, burned or moved — this only creates an image. Made with WTP! technology · one free creation per soul, forever.</div>
     </div>
     <div class="section-label">Your collection · ${owned.length} soul${owned.length===1?"":"s"}</div>
     <div class="grid" id="soulgrid"></div>
@@ -415,7 +416,7 @@ function render(account, freed, rank, totalLibs, owned){
         <img src="${IMG(id)}" loading="lazy" alt="Cubist Soul #${id}" />
         <div class="tag">Soul #${id}</div>
       </a>
-      <button class="fire-btn" data-fire="${id}" title="Free WTP! generation — “Fire is fine”">🔥</button>
+      <button class="fire-btn" data-fire="${id}" title="Create this soul's free WTP! artwork — your NFT is not affected">${SPARK}</button>
     </div>`).join("");
   if(!MH_ENABLED) collabEnhance(owned);
 }
@@ -590,10 +591,13 @@ async function collabEnhance(ids){
   await Promise.all(Array.from({length:Math.min(4, list.length||1)}, worker));
 }
 
+// Small gold spark (inline SVG, no emoji) — the collab's "create" glyph.
+const SPARK = `<svg class="spark" viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M12 2l2.3 7.7L22 12l-7.7 2.3L12 22l-2.3-7.7L2 12l7.7-2.3z"/></svg>`;
+
 function markFired(id, data){
   const b = document.querySelector(`.fire-btn[data-fire="${id}"]`);
   if(!b) return;
-  b.classList.add("fired"); b.textContent="🔥 fired";
+  b.classList.add("fired"); b.innerHTML=SPARK+" created";
   if(data && data.imageUrl) b.dataset.imageUrl=data.imageUrl;
   if(data && data.postUrl)  b.dataset.postUrl=data.postUrl;
 }
@@ -620,21 +624,21 @@ document.addEventListener("click", e=>{
 function openFireModal(id, btn){
   // already fired → jump straight to the result if we have the image
   if(btn && btn.classList.contains("fired") && btn.dataset.imageUrl){
-    return renderFireResult(id, {imageUrl:btn.dataset.imageUrl, postUrl:btn.dataset.postUrl}, "This soul already went through the fire.");
+    return renderFireResult(id, {imageUrl:btn.dataset.imageUrl, postUrl:btn.dataset.postUrl}, "This soul already has its WTP! artwork.");
   }
   const m = fireModalShell(`
     <div class="cx-eyebrow">Cubist Souls × WTP!</div>
-    <div class="cx-title">Send Soul #${id}<br/>through the fire</div>
+    <div class="cx-title">Reimagine Soul #${id}</div>
     <img class="cx-img" src="${IMG(id)}" alt="Cubist Soul #${id}" />
-    <div class="cx-copy">One free generation per soul · powered by WTP!<br/>Prompt: <b>“Fire is fine”</b></div>
-    <button class="cx-fire" id="cxFire" data-id="${id}">🔥 Sign &amp; fire</button>`);
+    <div class="cx-copy">WTP! will paint a new artwork from this soul with the prompt <b>“Fire is fine”</b>.<br/>Your Soul stays in your wallet, untouched — one free creation per soul.</div>
+    <button class="cx-fire" id="cxFire" data-id="${id}">${SPARK} Sign &amp; create</button>`);
   m.querySelector("#cxFire").onclick = ()=> doFire(id);
 }
 
 function showOven(){
   fireModalShell(`
     <div class="cx-eyebrow">Cubist Souls × WTP!</div>
-    <div class="cx-oven"><div class="flames">🔥 🔥 🔥</div>Stoking the museum's furnace…<br/>your soul is going through the fire.</div>`);
+    <div class="cx-oven"><div class="flames">${SPARK} ${SPARK} ${SPARK}</div>The museum's studio is at work…<br/>painting a new artwork from your soul.</div>`);
 }
 
 async function doFire(id){
@@ -648,7 +652,7 @@ async function doFire(id){
     const signer=await bp.getSigner();
     sig = await signer.signMessage(collabMessage(id, ACCOUNT));
   }catch(e){
-    if(btn){ btn.disabled=false; btn.innerHTML="🔥 Sign &amp; fire"; }
+    if(btn){ btn.disabled=false; btn.innerHTML=SPARK+" Sign &amp; create"; }
     toast("Signature declined — nothing was fired."); return;
   }
   showOven();
@@ -666,7 +670,7 @@ async function doFire(id){
     if(res.status===409){
       collabCacheSet(id, {used:true, imageUrl:data.imageUrl, postUrl:data.postUrl});
       markFired(id, data);
-      if(data.imageUrl) return renderFireResult(id, data, "This soul already went through the fire.");
+      if(data.imageUrl) return renderFireResult(id, data, "This soul already has its WTP! artwork.");
       return fireError(id, "This soul has already been fired.");
     }
     if(res.status===429) return fireError(id, "The fire is busy right now — try again in a moment.");
@@ -688,7 +692,7 @@ function renderFireResult(id, data, note){
     ${note?`<div class="cx-copy">${note}</div>`:""}
     <img class="cx-img" style="max-width:420px" src="${data.imageUrl}" alt="WTP generation for Cubist Soul #${id}" />
     <div class="cx-actions">
-      <button class="primary" id="cxShare">🔥 Share on X</button>
+      <button class="primary" id="cxShare">Share on X</button>
       <button id="cxDl">⤓ Download</button>
       <a href="${postUrl}" target="_blank" rel="noopener">See it on WTP →</a>
     </div>
