@@ -165,6 +165,60 @@
   body.mh-mode header{display:none}
   body.mh-mode main{display:none}
   body.mh-mode #mh .mh-hero .share-row{margin-top:26px}
+
+  /* ───── Cubist Souls × WTP! collab (public "Your Souls" view) ───── */
+  .collab-plaque{max-width:640px; margin:18px auto 2px; text-align:center;
+    background:linear-gradient(180deg, rgba(224,165,32,.1), rgba(224,165,32,.03));
+    border:1px dashed rgba(224,165,32,.5); border-radius:10px; padding:13px 18px}
+  .collab-plaque .cx-h{font-family:"Space Mono",monospace; font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--gild); font-weight:700; line-height:1.4}
+  .collab-plaque .cx-p{font-family:"Space Mono",monospace; font-size:11px; color:var(--mute); margin-top:5px; letter-spacing:.02em}
+
+  .soul-cell{position:relative}
+  .fire-btn{position:absolute; top:8px; right:8px; z-index:3; font-family:"Space Mono",monospace; font-weight:700;
+    font-size:12px; letter-spacing:.02em; padding:7px 10px; border-radius:999px; cursor:pointer; text-transform:none;
+    border:1px solid rgba(224,165,32,.55); background:rgba(20,4,8,.78); color:var(--gild);
+    backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); transition:.15s ease}
+  .fire-btn:hover{background:var(--gild); color:#2a1400; transform:translateY(-1px)}
+  .fire-btn.fired{border-color:rgba(224,165,32,.85); background:linear-gradient(180deg,#f0bf46,var(--gild)); color:#2a1400}
+  .fire-btn[disabled]{opacity:.6; cursor:progress}
+
+  /* fire modal (cartela) */
+  .cx-modal{position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center; padding:18px;
+    background:rgba(10,2,4,.82); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px)}
+  .cx-card{position:relative; width:100%; max-width:520px; max-height:92vh; overflow:auto; text-align:center;
+    background:linear-gradient(180deg, #2a0810, #16050a); border:1px solid rgba(224,165,32,.5); border-radius:14px;
+    padding:26px 24px 28px; box-shadow:0 24px 60px rgba(0,0,0,.6)}
+  .cx-close{position:absolute; top:8px; right:12px; background:none; border:none; color:var(--mute); font-size:24px; padding:4px 10px; cursor:pointer; line-height:1}
+  .cx-close:hover{color:var(--bone)}
+  .cx-eyebrow{font-family:"Space Mono",monospace; font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--gild)}
+  .cx-title{font-family:"Big Shoulders Display",sans-serif; font-weight:800; text-transform:uppercase; font-size:clamp(24px,5vw,34px); color:var(--bone); line-height:.95; margin:6px 0 2px}
+  .cx-img{width:100%; max-width:340px; aspect-ratio:1; object-fit:cover; border-radius:10px; border:2px solid var(--gild-deep); margin:14px auto 8px; display:block; background:var(--smoke)}
+  .cx-copy{font-family:"Space Mono",monospace; font-size:12px; color:var(--mute); line-height:1.6; margin:6px auto 14px; max-width:400px}
+  .cx-copy b{color:var(--bone)}
+  .cx-fire{width:100%; max-width:340px; margin:4px auto 0; display:block;
+    background:linear-gradient(180deg,#f0bf46,var(--gild) 55%,var(--gild-deep)); color:#2a1400; box-shadow:0 8px 24px rgba(224,165,32,.28)}
+  .cx-fire[disabled]{opacity:.7; cursor:progress}
+  .cx-oven{font-family:"Spectral",Georgia,serif; font-style:italic; color:#dcc6bf; font-size:15px; line-height:1.6; padding:22px 8px}
+  .cx-oven .flames{font-size:34px; letter-spacing:.12em; margin-bottom:10px}
+  @keyframes cxpulse{50%{opacity:.35}}
+  .cx-oven .flames{animation:cxpulse 1.1s ease-in-out infinite}
+  .cx-actions{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:16px}
+  .cx-actions button, .cx-actions a{font-family:"Space Mono",monospace; font-weight:700; font-size:12px; letter-spacing:.05em; text-transform:uppercase;
+    padding:11px 16px; border-radius:6px; cursor:pointer; text-decoration:none; display:inline-block; transition:.15s ease;
+    border:1px solid rgba(224,165,32,.45); background:transparent; color:var(--bone)}
+  .cx-actions button:hover, .cx-actions a:hover{border-color:var(--gild); color:var(--gild)}
+  .cx-actions .primary{background:linear-gradient(180deg,#f0bf46,var(--gild) 55%,var(--gild-deep)); color:#2a1400; border-color:transparent}
+  .cx-actions .primary:hover{color:#2a1400; transform:translateY(-1px)}
+
+  /* WTP sales cartela (post-generation pitch) */
+  .cx-pitch{margin-top:20px; padding:18px 4px 2px; border-top:1px solid rgba(224,165,32,.22); text-align:center}
+  .cx-pitch p{font-family:"Spectral",Georgia,serif; color:#dcc6bf; font-size:14px; line-height:1.6; margin:0 auto 13px; max-width:400px}
+  .cx-pitch p b{color:var(--bone)}
+  .cx-pitch .row{display:flex; gap:10px; justify-content:center; flex-wrap:wrap}
+  .cx-pitch .gold, .cx-pitch .join{font-family:"Space Mono",monospace; font-weight:700; font-size:12px; letter-spacing:.05em; text-transform:uppercase; padding:11px 18px; border-radius:6px; text-decoration:none}
+  .cx-pitch .gold{background:linear-gradient(180deg,#f0bf46,var(--gild) 55%,var(--gild-deep)); color:#2a1400; box-shadow:0 8px 20px rgba(224,165,32,.25)}
+  .cx-pitch .join{border:1px solid rgba(224,165,32,.45); color:var(--bone)}
+  .cx-pitch .join:hover{border-color:var(--gild); color:var(--gild)}
 </style>
 </head>
 <body>
@@ -212,6 +266,7 @@ const $ = s => document.querySelector(s);
 const content = $("#content");
 const IMG = id => `/api/img?id=${id}`;
 let CARD_STATS = null; // {freed, rank, total, held, tier} — used to draw the shareable card
+let ACCOUNT = null;    // connected wallet (lowercase) — used by the WTP collab signer
 
 // Museum Hours — hidden gamified preview. ONLY active with ?mh=1 in the URL.
 // Without the flag NOTHING below runs: no DOM, no extra requests, no logs.
@@ -272,6 +327,7 @@ async function connect(){
       catch{ return toast("Please switch your wallet to Ethereum mainnet."); }
     }
     const account=(await (await new ethers.BrowserProvider(window.ethereum).getSigner()).getAddress()).toLowerCase();
+    ACCOUNT = account;
     $("#bar").innerHTML = `<span class="pill"><span class="dot"></span>${account.slice(0,6)}…${account.slice(-4)}</span>`;
     await loadSouls(account);
   }catch(e){ toast(`Connection failed: ${e.shortMessage||e.message}`); }
@@ -338,6 +394,10 @@ function render(account, freed, rank, totalLibs, owned){
         <button id="dlCard" class="btn-share ghost">⤓ Download card</button>
       </div>
     </div>
+    <div class="collab-plaque">
+      <div class="cx-h">🔥 Cubist Souls × WTP! — every soul gets one free “Fire is fine”</div>
+      <div class="cx-p">Made with WTP! technology · one free generation per soul, forever</div>
+    </div>
     <div class="section-label">Your collection · ${owned.length} soul${owned.length===1?"":"s"}</div>
     <div class="grid" id="soulgrid"></div>
     <div class="rewards">
@@ -350,10 +410,14 @@ function render(account, freed, rank, totalLibs, owned){
     return;
   }
   grid.innerHTML = owned.map(id=>`
-    <a class="soul" href="https://opensea.io/item/ethereum/${SOULS}/${id}" target="_blank" rel="noopener">
-      <img src="${IMG(id)}" loading="lazy" alt="Cubist Soul #${id}" />
-      <div class="tag">Soul #${id}</div>
-    </a>`).join("");
+    <div class="soul-cell">
+      <a class="soul" href="https://opensea.io/item/ethereum/${SOULS}/${id}" target="_blank" rel="noopener">
+        <img src="${IMG(id)}" loading="lazy" alt="Cubist Soul #${id}" />
+        <div class="tag">Soul #${id}</div>
+      </a>
+      <button class="fire-btn" data-fire="${id}" title="Free WTP! generation — “Fire is fine”">🔥</button>
+    </div>`).join("");
+  if(!MH_ENABLED) collabEnhance(owned);
 }
 
 // ---- shareable recognition card (drawn client-side, WTP pattern) ----
@@ -450,6 +514,208 @@ document.addEventListener("click", e=>{
   if(e.target.closest("#shareCard")) shareCard();
   else if(e.target.closest("#dlCard")) downloadCard();
 });
+
+/* ════════════════════ CUBIST SOULS × WTP! collab (public "Your Souls") ════════════════════
+   Every owned soul earns ONE free "Fire is fine" generation on WTP (whattheprompt.art).
+   2-click flow: fire → personal_sign → POST. Degrades gracefully when the endpoint is
+   not live yet. Only runs post-connect; the wallet-less page is untouched. */
+const WTP_API    = "https://whattheprompt.art/api/collab/cubistsouls";
+const WTP_HOME   = "https://whattheprompt.art/";
+const COLLAB_TTL = 60*1000; // short sessionStorage TTL for status lookups
+
+// Canonical message the holder signs (EIP-191 personal_sign). BYTE-FOR-BYTE — do not reformat:
+//   line1  "WTP x Cubist Souls"
+//   line2  "Fire is fine"
+//   line3  "Soul: <tokenId>"
+//   line4  "Owner: <address lowercase>"     (joined with "\n", no trailing newline)
+function collabMessage(tokenId, address){
+  return `WTP x Cubist Souls\nFire is fine\nSoul: ${tokenId}\nOwner: ${String(address).toLowerCase()}`;
+}
+
+// ---- localhost-only debug mock: ?collabmock=1 on localhost fakes the WTP endpoint ----
+const COLLAB_MOCK = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)
+  && new URLSearchParams(location.search).get("collabmock")==="1";
+if(COLLAB_MOCK){
+  const used = new Set();                     // ids "already generated" this session
+  const realFetch = window.fetch.bind(window);
+  const jr = (obj, status=200)=> new Response(JSON.stringify(obj), {status, headers:{"Content-Type":"application/json"}});
+  const mk = id => ({imageUrl:`https://picsum.photos/seed/cs${id}/700`, postUrl:`${WTP_HOME}p/mock-${id}`});
+  window.fetch = async (url, opts={})=>{
+    const u = String(url);
+    if(u.startsWith(WTP_API + "/status")){
+      const id = new URL(u, location.origin).searchParams.get("id");
+      const on = used.has(String(id)) || (Number(id)%3===0);   // every 3rd soul pre-fired
+      return jr(on ? {used:true, ...mk(id)} : {used:false});
+    }
+    if(u.startsWith(WTP_API + "/generate")){
+      const body = JSON.parse(opts.body||"{}"); const id=String(body.tokenId);
+      await new Promise(r=>setTimeout(r, 1500));
+      if(used.has(id)) return jr({error:"already_generated", ...mk(id)}, 409);
+      used.add(id);
+      return jr({ok:true, ...mk(id)});
+    }
+    return realFetch(url, opts);
+  };
+  console.log("[collab] localhost mock active (?collabmock=1)");
+}
+
+// ---- status (used?) with short sessionStorage cache ----
+function collabCacheGet(id){
+  try{ const raw=sessionStorage.getItem("collab:"+id); if(raw){ const o=JSON.parse(raw); if(Date.now()-o.t<COLLAB_TTL) return o.v; } }catch{}
+  return null;
+}
+function collabCacheSet(id, v){ try{ sessionStorage.setItem("collab:"+id, JSON.stringify({t:Date.now(), v})); }catch{} }
+
+async function collabStatus(id){
+  const c = collabCacheGet(id); if(c) return c;
+  const res = await fetch(`${WTP_API}/status?id=${encodeURIComponent(id)}`, {headers:{"Accept":"application/json"}});
+  if(!res.ok) throw new Error("status "+res.status);
+  const v = await res.json();
+  collabCacheSet(id, v);
+  return v;
+}
+
+// Lazy/batch status for the visible owned souls; mark the ones already fired. Silent on failure.
+async function collabEnhance(ids){
+  const list = ids.slice(); let i=0;
+  const worker = async ()=>{
+    while(i < list.length){
+      const id = list[i++];
+      try{
+        const st = await collabStatus(id);
+        if(st && st.used) markFired(id, st);
+      }catch{ /* endpoint down / warming up — leave the default fire button */ }
+    }
+  };
+  await Promise.all(Array.from({length:Math.min(4, list.length||1)}, worker));
+}
+
+function markFired(id, data){
+  const b = document.querySelector(`.fire-btn[data-fire="${id}"]`);
+  if(!b) return;
+  b.classList.add("fired"); b.textContent="🔥 fired";
+  if(data && data.imageUrl) b.dataset.imageUrl=data.imageUrl;
+  if(data && data.postUrl)  b.dataset.postUrl=data.postUrl;
+}
+
+// ---- modal plumbing ----
+function closeFireModal(){ document.querySelector(".cx-modal")?.remove(); document.removeEventListener("keydown", cxEsc); }
+function cxEsc(e){ if(e.key==="Escape") closeFireModal(); }
+function fireModalShell(inner){
+  closeFireModal();
+  const m=document.createElement("div"); m.className="cx-modal";
+  m.innerHTML = `<div class="cx-card" role="dialog" aria-modal="true"><button class="cx-close" aria-label="Close">×</button>${inner}</div>`;
+  m.addEventListener("click", e=>{ if(e.target===m || e.target.closest(".cx-close")) closeFireModal(); });
+  document.body.appendChild(m);
+  document.addEventListener("keydown", cxEsc);
+  return m;
+}
+
+// Fire button on a grid card
+document.addEventListener("click", e=>{
+  const fb = e.target.closest(".fire-btn");
+  if(fb){ e.preventDefault(); openFireModal(fb.dataset.fire, fb); }
+});
+
+function openFireModal(id, btn){
+  // already fired → jump straight to the result if we have the image
+  if(btn && btn.classList.contains("fired") && btn.dataset.imageUrl){
+    return renderFireResult(id, {imageUrl:btn.dataset.imageUrl, postUrl:btn.dataset.postUrl}, "This soul already went through the fire.");
+  }
+  const m = fireModalShell(`
+    <div class="cx-eyebrow">Cubist Souls × WTP!</div>
+    <div class="cx-title">Send Soul #${id}<br/>through the fire</div>
+    <img class="cx-img" src="${IMG(id)}" alt="Cubist Soul #${id}" />
+    <div class="cx-copy">One free generation per soul · powered by WTP!<br/>Prompt: <b>“Fire is fine”</b></div>
+    <button class="cx-fire" id="cxFire" data-id="${id}">🔥 Sign &amp; fire</button>`);
+  m.querySelector("#cxFire").onclick = ()=> doFire(id);
+}
+
+function showOven(){
+  fireModalShell(`
+    <div class="cx-eyebrow">Cubist Souls × WTP!</div>
+    <div class="cx-oven"><div class="flames">🔥 🔥 🔥</div>Stoking the museum's furnace…<br/>your soul is going through the fire.</div>`);
+}
+
+async function doFire(id){
+  if(!window.ethereum){ toast("No wallet found — install MetaMask or Rabby."); return; }
+  if(!ACCOUNT){ toast("Connect your wallet first."); return; }
+  const btn=document.querySelector("#cxFire");
+  if(btn){ btn.disabled=true; btn.textContent="Check your wallet…"; }
+  let sig;
+  try{
+    const bp=new ethers.BrowserProvider(window.ethereum);
+    const signer=await bp.getSigner();
+    sig = await signer.signMessage(collabMessage(id, ACCOUNT));
+  }catch(e){
+    if(btn){ btn.disabled=false; btn.innerHTML="🔥 Sign &amp; fire"; }
+    toast("Signature declined — nothing was fired."); return;
+  }
+  showOven();
+  try{
+    const res=await fetch(`${WTP_API}/generate`, {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({tokenId:id, address:ACCOUNT, sig}),
+    });
+    let data={}; try{ data=await res.json(); }catch{}
+    if(res.ok && data.ok){
+      collabCacheSet(id, {used:true, imageUrl:data.imageUrl, postUrl:data.postUrl});
+      markFired(id, data);
+      return renderFireResult(id, data);
+    }
+    if(res.status===409){
+      collabCacheSet(id, {used:true, imageUrl:data.imageUrl, postUrl:data.postUrl});
+      markFired(id, data);
+      if(data.imageUrl) return renderFireResult(id, data, "This soul already went through the fire.");
+      return fireError(id, "This soul has already been fired.");
+    }
+    if(res.status===429) return fireError(id, "The fire is busy right now — try again in a moment.");
+    if(res.status===503 || res.status===404) return fireError(id, "The collab is warming up — try again soon.");
+    return fireError(id, data && data.error ? String(data.error).replace(/_/g," ") : "Couldn't fire this soul — try again.");
+  }catch(e){
+    return fireError(id, "The collab is warming up — try again soon.");
+  }
+}
+
+function renderFireResult(id, data, note){
+  const postUrl = data.postUrl || WTP_HOME;
+  // Share text lands the click on WTP's feed post (postUrl), by design.
+  const share = `My Cubist Soul #${id} went through the fire 🔥 @cubistsouls · made with WTP! tech\n\n${postUrl}`;
+  const m = fireModalShell(`
+    <div class="cx-eyebrow">Fresh out of the fire</div>
+    <div class="cx-title">Soul #${id} · “Fire is fine”</div>
+    ${note?`<div class="cx-copy">${note}</div>`:""}
+    <img class="cx-img" style="max-width:420px" src="${data.imageUrl}" alt="WTP generation for Cubist Soul #${id}" />
+    <div class="cx-actions">
+      <button class="primary" id="cxShare">🔥 Share on X</button>
+      <button id="cxDl">⤓ Download</button>
+      <a href="${postUrl}" target="_blank" rel="noopener">See it on WTP →</a>
+    </div>
+    <div class="cx-pitch">
+      <p><b>This came out of WTP</b> — the prompt playground. Your soul is already on the feed.</p>
+      <div class="row">
+        <a class="gold" href="${postUrl}" target="_blank" rel="noopener">Explore WTP →</a>
+        <a class="join" href="${WTP_HOME}" target="_blank" rel="noopener">Join free</a>
+      </div>
+    </div>`);
+  m.querySelector("#cxShare").onclick = ()=> window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(share)}`,"_blank","noopener");
+  m.querySelector("#cxDl").onclick    = ()=> downloadImage(data.imageUrl, `cubist-soul-${id}-fire.png`);
+}
+
+async function downloadImage(url, name){
+  try{ const r=await fetch(url,{mode:"cors"}); if(!r.ok) throw 0; downloadBlob(await r.blob(), name); }
+  catch{ window.open(url,"_blank","noopener"); toast("Opened the image in a new tab — long-press or right-click to save."); }
+}
+
+function fireError(id, msg){
+  fireModalShell(`
+    <div class="cx-eyebrow">Cubist Souls × WTP!</div>
+    <div class="cx-title">Soul #${id}</div>
+    <div class="cx-copy" style="font-size:14px; color:#f0c8a8">${msg}</div>
+    <button class="cx-fire" id="cxRetry" data-id="${id}">↻ Try again</button>`);
+  document.querySelector("#cxRetry").onclick = ()=> openFireModal(id, document.querySelector(`.fire-btn[data-fire="${id}"]`));
+  toast(msg);
+}
 
 /* ════════════════════ MUSEUM HOURS (hidden preview, ?mh=1) ════════════════════
    Soft-staking preview. Every piece of code in this block only runs when the
