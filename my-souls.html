@@ -369,23 +369,48 @@ async function drawCard(s){
   for(let y=0;y<H;y+=24){ x.beginPath(); x.moveTo(0,y+.5); x.lineTo(W,y+.5); x.stroke(); }
   const m=54; roundRect(x,m,m,W-2*m,H-2*m,18); x.fillStyle="rgba(20,4,8,.35)"; x.fill(); x.strokeStyle="rgba(224,165,32,.5)"; x.lineWidth=2; x.stroke();
   x.textAlign="center";
-  x.fillStyle="#e0a520"; x.font="700 22px 'Space Mono', monospace";
-  x.fillText(`FOUNDING LIBERATOR · ${String(s.tier).toUpperCase()}`, W/2, 152, W-160);
-  // headline: YOU FREED <n> SOULS (number in gold)
-  x.font="800 92px 'Big Shoulders Display', sans-serif";
-  const pre="YOU FREED ", num=String(s.freed), post=" SOULS";
-  const wp=x.measureText(pre).width, wn=x.measureText(num).width, ws=x.measureText(post).width;
-  let sx=(W-(wp+wn+ws))/2; const y1=278; x.textAlign="left";
-  x.fillStyle="#f4ede1"; x.fillText(pre,sx,y1);
-  x.fillStyle="#e0a520"; x.fillText(num,sx+wp,y1);
-  x.fillStyle="#f4ede1"; x.fillText(post,sx+wp+wn,y1);
-  x.textAlign="center";
-  const cols=[[`#${s.rank}`,`OF ${s.total} LIBERATORS`],[String(s.freed),"SOULS FREED"],[String(s.held),"HELD NOW"]];
-  const cx=[W/2-320,W/2,W/2+320], sy=420;
-  cols.forEach((col,i)=>{ x.fillStyle="#e0a520"; x.font="800 62px 'Big Shoulders Display', sans-serif"; x.fillText(col[0],cx[i],sy);
-    x.fillStyle="#d3a6a9"; x.font="400 18px 'Space Mono', monospace"; x.fillText(col[1],cx[i],sy+44); });
-  x.fillStyle="rgba(244,237,225,.62)"; x.font="700 21px 'Space Mono', monospace";
-  x.fillText("CUBIST SOULS · CUBISTSOULS.COM", W/2, H-92);
+  if(s.mh!=null){
+    // ── Museum Hours flavor (matches what the holder is looking at in ?mh=1) ──
+    x.fillStyle="#e0a520"; x.font="700 24px 'Space Mono', monospace";
+    x.fillText("🏛 MUSEUM HOURS", W/2, 140, W-160);
+    x.fillStyle="#d3a6a9"; x.font="400 18px 'Space Mono', monospace";
+    x.fillText(`FOUNDING LIBERATOR · ${String(s.tier).toUpperCase()}`, W/2, 176, W-160);
+    // big number: <mh> MH (number bone, unit gold)
+    const num=Math.floor(s.mh).toLocaleString("en-US"), unit=" MH";
+    x.font="800 118px 'Big Shoulders Display', sans-serif";
+    const wn=x.measureText(num).width; x.font="800 64px 'Big Shoulders Display', sans-serif";
+    const wu=x.measureText(unit).width;
+    let sx=(W-(wn+wu))/2; const y1=306; x.textAlign="left";
+    x.fillStyle="#f4ede1"; x.font="800 118px 'Big Shoulders Display', sans-serif"; x.fillText(num,sx,y1);
+    x.fillStyle="#e0a520"; x.font="800 64px 'Big Shoulders Display', sans-serif"; x.fillText(unit,sx+wn,y1);
+    x.textAlign="center";
+    x.fillStyle="#e0a520"; x.font="700 24px 'Space Mono', monospace";
+    x.fillText(`+${s.rate.toLocaleString("en-US",{maximumFractionDigits:2})} MH / HOUR`, W/2, 356);
+    const cols=[[`#${s.rank}`,`OF ${s.total} LIBERATORS`],[String(s.freed),"SOULS FREED"],[String(s.held),"HELD NOW"]];
+    const cx=[W/2-320,W/2,W/2+320], sy=468;
+    cols.forEach((col,i)=>{ x.fillStyle="#e0a520"; x.font="800 58px 'Big Shoulders Display', sans-serif"; x.fillText(col[0],cx[i],sy);
+      x.fillStyle="#d3a6a9"; x.font="400 17px 'Space Mono', monospace"; x.fillText(col[1],cx[i],sy+40); });
+    x.fillStyle="rgba(244,237,225,.62)"; x.font="700 19px 'Space Mono', monospace";
+    x.fillText("CUBIST SOULS · THE MUSEUM KEEPS ITS SECRETS · CUBISTSOULS.COM", W/2, H-88, W-180);
+  }else{
+    x.fillStyle="#e0a520"; x.font="700 22px 'Space Mono', monospace";
+    x.fillText(`FOUNDING LIBERATOR · ${String(s.tier).toUpperCase()}`, W/2, 152, W-160);
+    // headline: YOU FREED <n> SOULS (number in gold)
+    x.font="800 92px 'Big Shoulders Display', sans-serif";
+    const pre="YOU FREED ", num=String(s.freed), post=" SOULS";
+    const wp=x.measureText(pre).width, wn=x.measureText(num).width, ws=x.measureText(post).width;
+    let sx=(W-(wp+wn+ws))/2; const y1=278; x.textAlign="left";
+    x.fillStyle="#f4ede1"; x.fillText(pre,sx,y1);
+    x.fillStyle="#e0a520"; x.fillText(num,sx+wp,y1);
+    x.fillStyle="#f4ede1"; x.fillText(post,sx+wp+wn,y1);
+    x.textAlign="center";
+    const cols=[[`#${s.rank}`,`OF ${s.total} LIBERATORS`],[String(s.freed),"SOULS FREED"],[String(s.held),"HELD NOW"]];
+    const cx=[W/2-320,W/2,W/2+320], sy=420;
+    cols.forEach((col,i)=>{ x.fillStyle="#e0a520"; x.font="800 62px 'Big Shoulders Display', sans-serif"; x.fillText(col[0],cx[i],sy);
+      x.fillStyle="#d3a6a9"; x.font="400 18px 'Space Mono', monospace"; x.fillText(col[1],cx[i],sy+44); });
+    x.fillStyle="rgba(244,237,225,.62)"; x.font="700 21px 'Space Mono', monospace";
+    x.fillText("CUBIST SOULS · CUBISTSOULS.COM", W/2, H-92);
+  }
   return await new Promise(res=>c.toBlob(res,"image/png"));
 }
 
@@ -395,7 +420,10 @@ function downloadBlob(blob, name){
 }
 // URL baked in (X only linkifies it when a char follows — the closing 🔥 does that);
 // @cubistsouls sits in the body, never glued to the URL, so both stay linkified.
-function shareText(s){ return `I freed ${s.freed} Cubist Soul${s.freed===1?"":"s"} 🖼️ Founding Liberator #${s.rank} of ${s.total} on @cubistsouls. Reclaimed by the community.\n\nhttps://cubistsouls.com/my-souls 🔥`; }
+function shareText(s){
+  if(s.mh!=null) return `My souls have kept ${Math.floor(s.mh).toLocaleString("en-US")} Museum Hours 🏛 I freed ${s.freed} Cubist Soul${s.freed===1?"":"s"} — Liberator #${s.rank} of ${s.total} on @cubistsouls. The museum keeps its secrets.\n\nhttps://cubistsouls.com/my-souls 🔥`;
+  return `I freed ${s.freed} Cubist Soul${s.freed===1?"":"s"} 🖼️ Founding Liberator #${s.rank} of ${s.total} on @cubistsouls. Reclaimed by the community.\n\nhttps://cubistsouls.com/my-souls 🔥`;
+}
 
 async function shareCard(){
   if(!CARD_STATS) return;
@@ -630,6 +658,9 @@ function mhRender(d){
     <p class="mh-status" style="padding-top:34px">The museum records every hour. Their purpose will be revealed.</p>`;
 
   mhStartTicker(me.mh, me.rate);
+
+  // MH flavor for the share card — only in ?mh=1 mode; the public page keeps the classic card.
+  if(CARD_STATS){ CARD_STATS.mh = me.mh; CARD_STATS.rate = me.rate; }
 
   // Keep the sharing card: move the existing share buttons (built inside the now-hidden
   // classic view) into the MH hero. Delegated click handlers keep working after reparenting.
