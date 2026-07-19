@@ -19,6 +19,7 @@
   :root{
     --ink:#0b0908; --smoke:#171311; --ash:#2a2320; --bone:#f3ece3;
     --mute:#9c8f84; --ember:#ff5b18; --flame:#ffb020; --blood:#c22412;
+    --gild:#e0a520;
   }
   *{box-sizing:border-box}
   body{
@@ -86,6 +87,76 @@
   .topnav .links a{color:var(--mute); font-family:ui-monospace,Menlo,monospace; font-size:12px; letter-spacing:.05em; text-transform:uppercase; text-decoration:none; padding:6px 9px; border-radius:6px; white-space:nowrap}
   .topnav .links a:hover,.topnav .links a[aria-current]{color:var(--gild); background:rgba(224,165,32,.12)}
   @media(max-width:520px){ .topnav .brand span{display:none} .topnav .links a{padding:6px 7px; font-size:11px; letter-spacing:.02em} }
+
+  /* ── Filter by trait — museum cartela, collapsed by default ── */
+  #filterbar{ margin:0 0 22px; }
+  .fpill{
+    display:inline-flex; align-items:center; gap:9px; cursor:pointer;
+    background:var(--smoke); color:var(--bone); border:1px solid var(--gild);
+    border-radius:999px; padding:0 18px; min-height:44px;
+    font-family:ui-monospace,Menlo,monospace; font-size:12px; letter-spacing:.16em;
+    text-transform:uppercase; font-weight:700; transition:.16s;
+    box-shadow:inset 0 1px 0 rgba(255,236,190,.12);
+  }
+  .fpill:hover{ border-color:var(--flame); color:#fff; }
+  .fpill .ic{ color:var(--gild); font-size:15px; line-height:1; transition:.16s; }
+  .fpill[aria-expanded="true"]{ border-color:var(--flame); }
+  .fpill[aria-expanded="true"] .ic{ color:var(--flame); }
+  .fpill.busy{ cursor:progress; }
+  .fpill.busy .ic{ width:13px; height:13px; border:2px solid rgba(224,165,32,.35);
+    border-top-color:var(--gild); border-radius:50%; animation:spin .7s linear infinite; }
+  .fpill.err{ border-color:var(--blood); color:#f0b7ad; }
+  .fpill .ndot{ color:var(--flame); font-weight:800; }
+  @keyframes spin{ to{ transform:rotate(360deg) } }
+
+  .fpanel{
+    margin-top:14px; border:1px solid rgba(224,165,32,.42);
+    background:rgba(11,9,8,.94); border-radius:14px; padding:16px 16px 14px;
+    box-shadow:0 20px 55px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.4);
+    animation:plaque .22s ease both;
+  }
+  @keyframes plaque{ from{ opacity:0; transform:translateY(-6px) } to{ opacity:1; transform:none } }
+  .fpanel .fhead{ font-size:10px; letter-spacing:.28em; text-transform:uppercase;
+    color:var(--mute); margin:0 2px 14px; text-align:center; }
+  .fpanel .fhead b{ color:var(--gild); font-weight:700; }
+  .fgrid{ display:grid; gap:12px; grid-template-columns:1fr; }
+  @media(min-width:560px){ .fgrid{ grid-template-columns:repeat(2,1fr); } }
+  @media(min-width:900px){ .fgrid{ grid-template-columns:repeat(4,1fr); } }
+  .ffield label{ display:block; font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--gild); margin:0 0 5px 2px; font-weight:700; }
+  .ffield select{
+    width:100%; min-height:44px; background:var(--ink); color:var(--bone);
+    border:1px solid var(--ash); border-radius:9px; padding:0 34px 0 12px; font-size:13px;
+    font-family:inherit; appearance:none; -webkit-appearance:none; cursor:pointer;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23e0a520' stroke-width='1.6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 13px center;
+  }
+  .ffield select:hover{ border-color:#5c4a40; }
+  .ffield select:focus{ outline:none; border-color:var(--gild); }
+  .ffield select.on{ border-color:var(--gild); color:var(--flame); }
+
+  .factive{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:15px;
+    padding-top:14px; border-top:1px solid rgba(224,165,32,.16); }
+  .fmatch{ color:var(--mute); font-size:12px; letter-spacing:.1em; text-transform:uppercase;
+    margin-right:auto; }
+  .fmatch b{ color:var(--flame); font-weight:800; }
+  .fchip{ display:inline-flex; align-items:center; gap:5px; background:rgba(224,165,32,.13);
+    border:1px solid var(--gild); color:var(--flame); border-radius:999px;
+    padding:7px 6px 7px 13px; min-height:40px; font-size:11px; letter-spacing:.02em; font-weight:700; }
+  .fchip small{ color:var(--gild); font-weight:600; opacity:.85; }
+  .fchip button{ all:unset; cursor:pointer; width:26px; height:26px; display:grid; place-items:center;
+    border-radius:50%; color:var(--gild); font-size:15px; line-height:1; }
+  .fchip button:hover{ background:rgba(224,165,32,.28); color:#fff; }
+  .fclear{ background:none; border:1px solid var(--ash); color:var(--mute); cursor:pointer;
+    border-radius:999px; padding:7px 16px; font-size:11px; text-transform:uppercase;
+    letter-spacing:.1em; font-weight:700; min-height:40px; }
+  .fclear:hover{ border-color:#5c4a40; color:var(--bone); }
+
+  .card .tbadge{ position:absolute; top:6px; left:6px; right:6px; z-index:2;
+    background:rgba(11,9,8,.82); border:1px solid rgba(224,165,32,.55); color:var(--flame);
+    border-radius:6px; padding:3px 7px; font-size:9px; letter-spacing:.02em; font-weight:700;
+    font-family:ui-monospace,Menlo,monospace; line-height:1.3; text-transform:uppercase;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; backdrop-filter:blur(2px); }
 </style>
 </head>
 <body>
@@ -108,6 +179,12 @@
 </header>
 
 <main>
+  <div id="filterbar" hidden>
+    <button id="filterToggle" class="fpill" type="button" aria-expanded="false" aria-controls="filterPanel">
+      <span class="ic">⌕</span><span class="lbl">Filter by trait</span>
+    </button>
+    <div id="filterPanel" class="fpanel" hidden></div>
+  </div>
   <div id="content" class="grid"></div>
 </main>
 
@@ -127,6 +204,7 @@ const RPCS = [
 ];
 const IMG = id => `/api/img?id=${id}`;
 const ITEM = id => `https://opensea.io/item/ethereum/${SOULS}/${id}`;
+const TRAITS_URL = "https://raw.githubusercontent.com/adriangallery/cubist-souls-assets/main/traits/index.json";
 
 const $ = s => document.querySelector(s);
 const content = $("#content");
@@ -194,6 +272,170 @@ async function load(){
            onerror="this.parentNode.classList.remove('loading');this.parentNode.classList.add('noimg')" />
       <div class="tag">#${id}</div>
     </a>`).join("");
+
+  // The freed set is known — reveal the (still collapsed) trait filter.
+  FREED = ids;
+  $("#filterbar").hidden = false;
+  if (FILTERS_ACTIVE()) applyFilters(); // survive an in-session reload of the grid
+}
+
+/* ─────────────── Filter by trait (lazy, client-side) ─────────────── */
+let TRAITS = null;          // parsed index.json (loaded on first panel open)
+let FREED = [];             // freed token ids currently shown
+const FILTERS = {};         // { category: selectedValue }  ('' = Any)
+const SELECTS = {};         // { category: <select> }
+const FILTERS_ACTIVE = () => Object.values(FILTERS).some(Boolean);
+
+const toggle = $("#filterToggle");
+const panel = $("#filterPanel");
+
+toggle.addEventListener("click", async () => {
+  const open = toggle.getAttribute("aria-expanded") === "true";
+  if (open){
+    toggle.setAttribute("aria-expanded", "false");
+    panel.hidden = true;
+    return;
+  }
+  if (!TRAITS){
+    // lazy fetch, once
+    toggle.classList.add("busy");
+    toggle.querySelector(".lbl").textContent = "Loading traits…";
+    try {
+      const r = await fetch(TRAITS_URL, { cache: "force-cache" });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      TRAITS = await r.json();
+      buildPanel();
+    } catch (e){
+      toggle.classList.remove("busy");
+      toggle.classList.add("err");
+      toggle.querySelector(".ic").textContent = "!";
+      toggle.querySelector(".lbl").textContent = "Filter unavailable — tap to retry";
+      TRAITS = null;
+      return;
+    }
+    toggle.classList.remove("busy", "err");
+    toggle.querySelector(".ic").textContent = "⌕";
+    toggle.querySelector(".lbl").textContent = "Filter by trait";
+  }
+  toggle.setAttribute("aria-expanded", "true");
+  panel.hidden = false;
+});
+
+function valueOf(cat, id){
+  const s = TRAITS.tokens[cat];
+  return TRAITS.values[cat][s.charCodeAt(id - 1) - TRAITS.base];
+}
+
+function buildPanel(){
+  const cats = TRAITS.categories;
+  // Count each value across the freed set (static per session).
+  const counts = {};
+  for (const c of cats) counts[c] = new Map();
+  for (const id of FREED){
+    for (const c of cats){
+      const v = valueOf(c, id);
+      counts[c].set(v, (counts[c].get(v) || 0) + 1);
+    }
+  }
+
+  const grid = document.createElement("div");
+  grid.className = "fgrid";
+  for (const c of cats){
+    const opts = [...counts[c].entries()]
+      .filter(([, n]) => n > 0)
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    const field = document.createElement("div");
+    field.className = "ffield";
+    const id = "f-" + c.replace(/\s+/g, "-").toLowerCase();
+    field.innerHTML =
+      `<label for="${id}">${c}</label>` +
+      `<select id="${id}" data-cat="${c}">` +
+        `<option value="">Any (${opts.length})</option>` +
+        opts.map(([v, n]) =>
+          `<option value="${v.replace(/"/g, "&quot;")}">${v} (${n})</option>`).join("") +
+      `</select>`;
+    grid.appendChild(field);
+    const sel = field.querySelector("select");
+    SELECTS[c] = sel;
+    FILTERS[c] = "";
+    sel.addEventListener("change", () => {
+      FILTERS[c] = sel.value;
+      sel.classList.toggle("on", !!sel.value);
+      applyFilters();
+    });
+  }
+
+  panel.innerHTML = "";
+  const head = document.createElement("p");
+  head.className = "fhead";
+  head.innerHTML = `Counts are among the <b>${FREED.length.toLocaleString("en-US")}</b> souls freed`;
+  panel.appendChild(head);
+  panel.appendChild(grid);
+
+  const active = document.createElement("div");
+  active.className = "factive";
+  active.innerHTML = `<span class="fmatch" id="fmatch"></span><span class="fchips" id="fchips"></span>`;
+  panel.appendChild(active);
+
+  applyFilters();
+}
+
+function applyFilters(){
+  if (!TRAITS) return;
+  const active = Object.entries(FILTERS).filter(([, v]) => v);
+  const cards = content.querySelectorAll(".card");
+  let match = 0;
+  cards.forEach(card => {
+    const id = +card.dataset.id;
+    const ok = active.every(([cat, val]) => valueOf(cat, id) === val);
+    card.style.display = ok ? "" : "none";
+    let b = card.querySelector(".tbadge");
+    if (ok && active.length){
+      const txt = active.map(([, val]) => val).join(" · ");
+      if (!b){ b = document.createElement("div"); b.className = "tbadge"; card.appendChild(b); }
+      b.textContent = txt;
+      b.title = active.map(([cat, val]) => cat + ": " + val).join("\n");
+    } else if (b){ b.remove(); }
+    if (ok) match++;
+  });
+  renderActive(active, match);
+}
+
+function renderActive(active, match){
+  const matchEl = $("#fmatch");
+  const chipsEl = $("#fchips");
+  if (!matchEl || !chipsEl) return;
+  const M = FREED.length.toLocaleString("en-US");
+  matchEl.innerHTML = active.length
+    ? `<b>${match.toLocaleString("en-US")}</b> of ${M} freed match`
+    : `${M} freed`;
+
+  chipsEl.innerHTML = "";
+  for (const [cat, val] of active){
+    const chip = document.createElement("span");
+    chip.className = "fchip";
+    chip.innerHTML = `<small>${cat}</small> ${val} <button type="button" aria-label="Remove ${cat} filter">×</button>`;
+    chip.querySelector("button").addEventListener("click", () => {
+      FILTERS[cat] = "";
+      if (SELECTS[cat]){ SELECTS[cat].value = ""; SELECTS[cat].classList.remove("on"); }
+      applyFilters();
+    });
+    chipsEl.appendChild(chip);
+  }
+  if (active.length){
+    const clr = document.createElement("button");
+    clr.className = "fclear";
+    clr.type = "button";
+    clr.textContent = "Clear";
+    clr.addEventListener("click", () => {
+      for (const c in FILTERS){
+        FILTERS[c] = "";
+        if (SELECTS[c]){ SELECTS[c].value = ""; SELECTS[c].classList.remove("on"); }
+      }
+      applyFilters();
+    });
+    chipsEl.appendChild(clr);
+  }
 }
 
 load();
