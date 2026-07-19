@@ -113,6 +113,11 @@
   .meta-row a{color:var(--gild); text-decoration:none}
   .meta-row a:hover{color:var(--flame)}
   .meta-row .freed{color:var(--mute); margin:0}
+
+  .pricing{max-width:560px; margin:0 auto 20px; text-align:center; padding:12px 18px; border-radius:10px;
+    background:rgba(224,165,32,.1); border:1px solid rgba(224,165,32,.32);
+    font-family:ui-monospace,Menlo,monospace; font-size:13px; letter-spacing:.03em; color:var(--bone)}
+  .pricing b{color:var(--gild)}
   .explore{
     margin:14px auto 0; text-align:center; font-size:12px; color:var(--mute);
     letter-spacing:.08em; text-transform:uppercase;
@@ -289,6 +294,7 @@
 </header>
 
 <main>
+  <div class="pricing" id="pricing" hidden></div>
   <div class="bar" id="bar">
     <button class="btn-connect" id="connect">Connect Wallet</button>
   </div>
@@ -356,8 +362,10 @@ const NFT_ABI = [
   "function setApprovalForAll(address operator, bool approved)"
 ];
 const SOULS_ABI = [
-  "function convert(uint256[] tokenIds)",
-  "function ownerOf(uint256 tokenId) view returns (address)"
+  "function convert(uint256[] tokenIds) payable",
+  "function ownerOf(uint256 tokenId) view returns (address)",
+  "function priceNow() view returns (uint256)",
+  "function pricing() view returns (uint64,uint32,uint32,uint32,uint256,uint256,uint256)"
 ];
 const MC_ABI = [
   "function tryAggregate(bool requireSuccess, (address target, bytes callData)[] calls) view returns ((bool success, bytes returnData)[])"
@@ -591,7 +599,8 @@ function updateDock() {
   $("#dock-sub").textContent = n === 1
     ? "Ready for the flames"
     : `#${ids.slice(0, 3).join(", #")}${n > 3 ? "…" : ""}${txs > 1 ? ` · ${txs} burn txs` : ""}`;
-  $("#burn").textContent = n === 1 ? "🔥 Burn it" : `🔥 Burn ${n}`;
+  const cost = PRICE === 0n ? "Free" : `Ξ${fmtEth(PRICE * BigInt(n))}`;
+  $("#burn").textContent = (n === 1 ? "🔥 Burn it" : `🔥 Burn ${n}`) + ` · ${cost}`;
   dock.classList.add("up");
 }
 
@@ -649,16 +658,20 @@ $("#burn").onclick = async () => {
 
     // --- Burn --- convert() caps at 50, so a big selection auto-chunks into 50s.
     const souls = new ethers.Contract(SOULS, SOULS_ABI, signer);
+    // price per soul, read fresh at burn time (in case a tier boundary just passed)
+    let price = PRICE;
+    try { price = await new ethers.Contract(SOULS, SOULS_ABI, await reliableProvider()).priceNow(); } catch {}
     const chunks = [];
     for (let i = 0; i < ids.length; i += MAX_PER_TX) chunks.push(ids.slice(i, i + MAX_PER_TX));
     let lastHash;
     for (let c = 0; c < chunks.length; c++) {
       const part = chunks[c];
+      const value = price * BigInt(part.length);
       btn.textContent = chunks.length > 1 ? `Confirm burn ${c + 1}/${chunks.length}…` : "Confirm in wallet…";
-      const tx = await souls.convert(part);
+      const tx = await souls.convert(part, { value });
       lastHash = tx.hash;
       btn.textContent = chunks.length > 1 ? `Burning ${c + 1}/${chunks.length}…` : "Burning…";
-      toast(`🔥 Burning ${part.length} canvas${part.length > 1 ? "es" : ""}${chunks.length > 1 ? ` (batch ${c + 1}/${chunks.length})` : ""} — <a href="https://etherscan.io/tx/${tx.hash}" target="_blank" rel="noopener">Etherscan</a>`, 0);
+      toast(`🔥 Burning ${part.length} canvas${part.length > 1 ? "es" : ""}${value > 0n ? ` · Ξ${fmtEth(value)}` : ""}${chunks.length > 1 ? ` (batch ${c + 1}/${chunks.length})` : ""} — <a href="https://etherscan.io/tx/${tx.hash}" target="_blank" rel="noopener">Etherscan</a>`, 0);
       await tx.wait();
       part.forEach(id => {
         const card = content.querySelector(`.card[data-id="${id}"]`);
@@ -708,6 +721,39 @@ if (window.ethereum) {
   // Reconnect silently if the wallet already authorized this site (no popup).
   window.ethereum.request({ method: "eth_accounts" }).then(a => { if (a && a.length) connect(); }).catch(() => {});
 }
+
+// --- tiered burn pricing (read from the diamond) ---
+let PRICE = 0n, PRICING = null;
+const fmtEth = wei => { const s = ethers.formatEther(wei); return s.includes(".") ? s.replace(/\.?0+$/, "") : s; };
+const fmtDate = sec => new Date(Number(sec) * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+
+async function loadPricing() {
+  try {
+    const rpc = await reliableProvider();
+    const c = new ethers.Contract(SOULS, SOULS_ABI, rpc);
+    const pr = await c.pricing();
+    PRICE = await c.priceNow();
+    PRICING = { ss: Number(pr[0]), b: [Number(pr[1]), Number(pr[2]), Number(pr[3])], p: [pr[4], pr[5], pr[6]] };
+    renderPricing();
+    updateDock();
+  } catch { /* silent */ }
+}
+function renderPricing() {
+  const el = $("#pricing"); if (!el || !PRICING) return;
+  const { ss, b, p } = PRICING;
+  let html;
+  if (PRICE === 0n) {
+    html = `🎟 <b>Free mint week</b> — free until ${fmtDate(ss + b[0])}. Just gas.`;
+  } else {
+    const e = Math.floor(Date.now() / 1000) - ss;
+    let nextAt = null, nextP = null;
+    if (e < b[1]) { nextAt = ss + b[1]; nextP = p[1]; }
+    else if (e < b[2]) { nextAt = ss + b[2]; nextP = p[2]; }
+    html = `<b>Ξ${fmtEth(PRICE)}</b> per soul` + (nextAt ? ` · rises to Ξ${fmtEth(nextP)} on ${fmtDate(nextAt)}` : "");
+  }
+  el.innerHTML = html; el.hidden = false;
+}
+loadPricing();
 
 // Discreet "X of 10,000 souls freed" — reads totalSupply() with no wallet.
 // If every RPC is down, stay silent (the element is hidden by default).
