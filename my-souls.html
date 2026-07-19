@@ -160,6 +160,11 @@
   #mh .mh-status{text-align:center; color:#dcc6bf; font-size:15px; line-height:1.7; padding:30px 16px; font-style:italic}
   #mh .mh-cta{text-align:center; padding:24px 0}
   @media(max-width:560px){ #mh .lb-row{grid-template-columns:36px 1fr auto; font-size:12px; padding:10px 12px} }
+  /* mh-mode: with ?mh=1 the page IS Museum Hours — hide the classic Your Souls view (it duplicates
+     the exhibits/stats). The share card gets reparented into the MH hero. Without the flag nothing changes. */
+  body.mh-mode header{display:none}
+  body.mh-mode main{display:none}
+  body.mh-mode #mh .mh-hero .share-row{margin-top:26px}
 </style>
 </head>
 <body>
@@ -625,10 +630,17 @@ function mhRender(d){
     <p class="mh-status" style="padding-top:34px">The museum records every hour. Their purpose will be revealed.</p>`;
 
   mhStartTicker(me.mh, me.rate);
+
+  // Keep the sharing card: move the existing share buttons (built inside the now-hidden
+  // classic view) into the MH hero. Delegated click handlers keep working after reparenting.
+  const sr = document.querySelector("#content .share-row");
+  const hero = document.querySelector("#mh .mh-hero");
+  if(sr && hero) hero.appendChild(sr);
 }
 
 function mhInit(){
   if(mhStarted) return; mhStarted=true;
+  document.body.classList.add("mh-mode");
   const main=document.querySelector("main"); if(!main) return;
   main.insertAdjacentHTML("afterend", `
     <section id="mh">
