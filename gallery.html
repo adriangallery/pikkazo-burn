@@ -148,6 +148,11 @@
     font-family:ui-monospace,Menlo,monospace; }
   .funavail[role="button"]{ cursor:pointer; }
   .funavail[role="button"]:hover{ color:var(--mute); }
+  .fnote{ display:flex; align-items:center; gap:6px; margin:6px 2px 0;
+    color:var(--mute); font-size:10px; letter-spacing:.06em; text-transform:uppercase;
+    font-family:ui-monospace,Menlo,monospace; }
+  .fnote .sp{ width:9px; height:9px; border:1.5px solid rgba(224,165,32,.3);
+    border-top-color:var(--gild); border-radius:50%; animation:spin .7s linear infinite; flex:none; }
 
   .factive{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:15px;
     padding-top:14px; border-top:1px solid rgba(224,165,32,.16); }
@@ -303,7 +308,10 @@ async function load(){
        values(),          // option order for the select (after load)
        valueOf(id),       // decoded value for a tokenId (string|null)
        badge(v),          // short text for card badge + chip (default: v)
-       sort }             // "count" (desc among freed) | "listed" (values() order)
+       sort,              // "count" (desc among freed) | "listed" (values() order)
+       note()? }          // optional: small live hint under the select
+   Data that keeps loading after load() resolves can call refreshField(key)
+   to re-count in place without losing the user's selection.
    Nothing else needs touching: counts, AND-filtering, chips, badges and the
    Clear button all read the registry. "soul" entries hydrate independently
    with a small spinner, so a slow loader never blocks the canvas selects.  */
@@ -321,7 +329,9 @@ const MULTICALL3 = "0xcA11bde05977b3631167028862bE2a173976CA11";
 const MC_ABI = ["function tryAggregate(bool requireSuccess, (address target, bytes callData)[] calls) view returns ((bool success, bytes returnData)[])"];
 const COHORT_ABI = ["function cohortOf(uint256) view returns (uint8)"]; // selector 0xd5b0e035
 const COHORT_NAMES = ["OG", "Era I", "Era II", "Era III", "Era IV"];
-const COHORT_TTL = 5 * 60 * 1000; // short — the freed set grows with every burn
+const COHORTS_URL = "https://raw.githubusercontent.com/adriangallery/cubist-souls-assets/main/cohorts/cohorts.json";
+const COHORT_LS_KEY = "cs:cohorts"; // PERMANENT cache — cohortOf(id) is immutable once freed
+let COHORT_PENDING = 0;             // freed ids still syncing on-chain (delta)
 
 async function loadTraits(){
   if (TRAITS) return;
@@ -339,33 +349,64 @@ async function loadRarity(){
   RARITY = j;
 }
 
+function persistCohorts(){
+  try {
+    const o = {}; for (const [k, v] of COHORTS) o[k] = v;
+    localStorage.setItem(COHORT_LS_KEY, JSON.stringify(o));
+  } catch {}
+}
+
+// Cohorts resolve in three cheap layers — cohortOf(id) is immutable once a
+// soul is freed, so everything learned is cached FOREVER:
+//   1. localStorage (permanent)                      → warm visits: 0 network
+//   2. static cohorts.json snapshot (mirrored 6h)    → cold visits: one fetch
+//   3. on-chain multicall of the DELTA only (souls freed since the snapshot),
+//      batches of 100 run ~4 in parallel, in the background — the select is
+//      already usable with the snapshot counts while it runs.
 async function loadCohorts(){
   if (COHORTS) return;
-  const key = "freed:cohorts";
-  try {
-    const raw = sessionStorage.getItem(key);
-    if (raw){
-      const o = JSON.parse(raw);
-      if (Date.now() - o.t < COHORT_TTL && o.n === FREED.length){
-        COHORTS = new Map(o.v); return;
-      }
-    }
-  } catch {}
-  const p = await reliableProvider();
-  const iface = new ethers.Interface(COHORT_ABI);
-  const mc = new ethers.Contract(MULTICALL3, MC_ABI, p);
   const m = new Map();
-  for (let i = 0; i < FREED.length; i += 100){
-    const chunk = FREED.slice(i, i + 100);
-    const calls = chunk.map(id => ({ target: SOULS, callData: iface.encodeFunctionData("cohortOf", [id]) }));
-    const res = await mc.tryAggregate(false, calls);
-    res.forEach(({ success, returnData }, j) => {
-      if (success) m.set(chunk[j], Number(iface.decodeFunctionResult("cohortOf", returnData)[0]));
-    });
+  try {
+    const o = JSON.parse(localStorage.getItem(COHORT_LS_KEY) || "{}");
+    for (const k in o) m.set(+k, o[k]);
+  } catch {}
+  if (!FREED.every(id => m.has(id))){
+    try {
+      const r = await fetch(COHORTS_URL, { cache: "no-cache" });
+      if (r.ok){
+        const j = await r.json();
+        for (const k in (j.cohorts || {})) m.set(+k, j.cohorts[k]);
+      }
+    } catch {}
   }
-  if (!m.size) throw new Error("cohort multicall returned nothing");
+  if (!m.size) throw new Error("no cohort data"); // all layers empty → tap-to-retry
   COHORTS = m;
-  try { sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), n: FREED.length, v: [...m] })); } catch {}
+  persistCohorts();
+  const delta = FREED.filter(id => !m.has(id));
+  COHORT_PENDING = delta.length;
+  if (delta.length) hydrateCohortDelta(delta); // background — don't block the field
+}
+
+async function hydrateCohortDelta(delta){
+  try {
+    const p = await reliableProvider();
+    const iface = new ethers.Interface(COHORT_ABI);
+    const mc = new ethers.Contract(MULTICALL3, MC_ABI, p);
+    const queue = [];
+    for (let i = 0; i < delta.length; i += 100) queue.push(delta.slice(i, i + 100));
+    await Promise.all(Array.from({ length: Math.min(4, queue.length) }, async () => {
+      for (let chunk; (chunk = queue.shift()); ){
+        const calls = chunk.map(id => ({ target: SOULS, callData: iface.encodeFunctionData("cohortOf", [id]) }));
+        const res = await mc.tryAggregate(false, calls);
+        res.forEach(({ success, returnData }, j) => {
+          if (success) COHORTS.set(chunk[j], Number(iface.decodeFunctionResult("cohortOf", returnData)[0]));
+        });
+      }
+    }));
+    persistCohorts();
+  } catch {} // partial is fine — counts stay honest; next visit retries the rest
+  COHORT_PENDING = FREED.filter(id => !COHORTS.has(id)).length;
+  refreshField("Cohort");
 }
 
 const CANVAS_CATS = ["Art Background", "Base", "Clothes", "Mouth", "Head", "Left Eye", "Nose", "Right Eye"];
@@ -383,6 +424,7 @@ const REGISTRY = [
     values: () => COHORT_NAMES,
     valueOf: id => COHORTS.has(id) ? COHORT_NAMES[COHORTS.get(id)] : null,
     badge: v => v,
+    note: () => COHORT_PENDING > 0 ? `+${COHORT_PENDING} new soul${COHORT_PENDING === 1 ? "" : "s"} syncing…` : "",
   },
   {
     key: "Rarity", label: "Rarity", group: "soul", sort: "listed",
@@ -458,7 +500,23 @@ function buildField(cat){
     sel.classList.toggle("on", !!sel.value);
     applyFilters();
   });
+  const n = cat.note && cat.note();
+  if (n) field.insertAdjacentHTML("beforeend", `<div class="fnote"><span class="sp"></span>${n}</div>`);
   return field;
+}
+
+// Rebuild a category's field in place (fresh counts) preserving the selection.
+function refreshField(key){
+  const sel = SELECTS[key];
+  if (!sel || !sel.isConnected) return;
+  const keep = FILTERS[key] || "";
+  const fresh = buildField(CAT[key]);
+  sel.closest(".ffield").replaceWith(fresh);
+  const ns = SELECTS[key];
+  if (keep && [...ns.options].some(o => o.value === keep)){
+    ns.value = keep; ns.classList.add("on");
+  } else if (keep){ FILTERS[key] = ""; }
+  applyFilters();
 }
 
 function buildPanel(){
