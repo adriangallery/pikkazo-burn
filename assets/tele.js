@@ -17,6 +17,8 @@
  *      ticker  — scrolling ticker strip
  *      eraBar  — era / progress bar
  *      govern  — governance entry points
+ *      wc      — offer WalletConnect (consumed by assets/wallet.js). false =
+ *                injected-wallet flow only, no WalletConnect anywhere.
  *    CONVENTION for other scripts: read `window.CS_FLAGS` if it already exists,
  *    otherwise listen once for `document.addEventListener('cs:flags', ...)`.
  *    e.g.  function withFlags(cb){ if(window.CS_FLAGS) cb(window.CS_FLAGS);
@@ -29,7 +31,7 @@
 
   var ENDPOINT = "/api/telemetry";
   var FLAGS_URL = "/flags.json";
-  var DEFAULT_FLAGS = { collab: true, ticker: true, eraBar: true, govern: true };
+  var DEFAULT_FLAGS = { collab: true, ticker: true, eraBar: true, govern: true, wc: true };
 
   // ── error telemetry ───────────────────────────────────────────────────────
   var sent = {};       // session-scoped dedupe: msg → true
