@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Spectral:ital,wght@0,400;0,500;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script src="/assets/wallet.js"></script>
 <script src="/assets/tele.js" defer></script>
 <style>
   :root{
@@ -44,6 +45,11 @@
   .btn-connect{background:linear-gradient(180deg,#f0bf46,var(--gild) 55%,var(--gild-deep)); color:#2a1400; box-shadow:0 8px 24px rgba(224,165,32,.28)}
   .btn-connect:hover{transform:translateY(-2px)}
   .pill{display:inline-flex; align-items:center; gap:9px; background:rgba(0,0,0,.3); border:1px solid var(--ash); padding:11px 18px; border-radius:999px; font-size:13px; color:var(--mute); font-family:"Space Mono",monospace}
+  .wc-alt{text-align:center; margin:4px auto 0}
+  .wc-alt[hidden]{display:none}
+  .wc-link{background:none; border:none; padding:6px 10px; text-transform:none; letter-spacing:.02em;
+    font-weight:400; font-size:12px; color:var(--mute); border-bottom:1px dashed rgba(224,165,32,.4); border-radius:0}
+  .wc-link:hover{color:var(--gild)}
   .pill b{color:var(--bone)}
   .dot{width:7px;height:7px;border-radius:50%;background:#37d67a;box-shadow:0 0 10px #37d67a}
 
@@ -259,6 +265,9 @@
   <div class="bar" id="bar">
     <button class="btn-connect" id="connect">Connect Wallet</button>
   </div>
+  <div class="wc-alt" id="wcAlt" hidden>
+    <button class="wc-link" id="wcConnect">or connect with WalletConnect</button>
+  </div>
 
   <div id="content" class="note">Connect your wallet to see the souls you've freed.</div>
 </main>
@@ -331,22 +340,45 @@ function tierOf(n){
   return "Liberator";
 }
 
-$("#connect").onclick = connect;
-async function connect(){
-  if(!window.ethereum) return toast("No wallet found — install MetaMask or Rabby.");
+// Feature-flag helper (flags land async via tele.js; fail-open before they do).
+function withFlags(cb){ if(window.CS_FLAGS) cb(window.CS_FLAGS); else document.addEventListener("cs:flags", e=>cb(e.detail), {once:true}); }
+function hideWcAlt(){ const a=$("#wcAlt"); if(a) a.hidden=true; }
+
+$("#connect").onclick = () => connect();
+$("#wcConnect").onclick = () => connect({ wc: true });
+
+// One connect path, two providers. Injected wallet stays the first option and its
+// flow is unchanged; WalletConnect is used when there's no injected wallet (or when
+// the holder explicitly picks the WalletConnect link / the localhost ?wcforce harness).
+async function connect(opts){
+  const useWc = (opts && opts.wc) || CSWallet.forceWc() || (!CSWallet.hasInjected() && CSWallet.wcEnabled());
   try{
-    const bp=new ethers.BrowserProvider(window.ethereum);
-    await bp.send("eth_requestAccounts",[]);
-    const net=await bp.getNetwork();
-    if(net.chainId!==1n){
-      try{ await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:"0x1"}]}); }
-      catch{ return toast("Please switch your wallet to Ethereum mainnet."); }
+    let eip;
+    if(useWc){
+      if(!CSWallet.wcEnabled()) return toast("No wallet found — install MetaMask or Rabby.");
+      eip = await CSWallet.connectWalletConnect();      // opens the QR / deep-link modal
+    } else if(CSWallet.hasInjected()){
+      eip = CSWallet.connectInjected();
+      await new ethers.BrowserProvider(eip).send("eth_requestAccounts",[]);
+    } else {
+      return toast("No wallet found — install MetaMask or Rabby.");
     }
-    const account=(await (await new ethers.BrowserProvider(window.ethereum).getSigner()).getAddress()).toLowerCase();
+
+    const net=await new ethers.BrowserProvider(eip).getNetwork();
+    if(net.chainId!==1n){
+      const ok = await CSWallet.ensureMainnet();
+      if(!ok) return toast("Please switch your wallet to Ethereum mainnet.");
+    }
+    const account=(await (await new ethers.BrowserProvider(CSWallet.getEip1193()).getSigner()).getAddress()).toLowerCase();
     ACCOUNT = account;
+    hideWcAlt();
     $("#bar").innerHTML = `<span class="pill"><span class="dot"></span>${account.slice(0,6)}…${account.slice(-4)}</span>`;
     await loadSouls(account);
-  }catch(e){ toast(`Connection failed: ${e.shortMessage||e.message}`); }
+  }catch(e){
+    const m = (e && (e.shortMessage||e.message)) || "";
+    if(/reject|declin|user closed|connection request reset|modal closed/i.test(m)) return;
+    toast(`Connection failed: ${m || e}`);
+  }
 }
 
 async function loadSouls(account){
@@ -657,13 +689,14 @@ function showOven(){
 }
 
 async function doFire(id){
-  if(!window.ethereum){ toast("No wallet found — install MetaMask or Rabby."); return; }
+  const eip = CSWallet.getEip1193();
+  if(!eip){ toast("Connect your wallet first."); return; }
   if(!ACCOUNT){ toast("Connect your wallet first."); return; }
   const btn=document.querySelector("#cxFire");
   if(btn){ btn.disabled=true; btn.textContent="Check your wallet…"; }
   let sig;
   try{
-    const bp=new ethers.BrowserProvider(window.ethereum);
+    const bp=new ethers.BrowserProvider(eip);
     const signer=await bp.getSigner();
     sig = await signer.signMessage(collabMessage(id, ACCOUNT));
   }catch(e){
@@ -1001,12 +1034,24 @@ function mhInit(){
 }
 if(MH_ENABLED) mhInit();
 
-if(window.ethereum){
-  window.ethereum.on?.("accountsChanged", ()=>location.reload());
-  window.ethereum.on?.("chainChanged", ()=>location.reload());
+// Wallet changes reload the page — same behavior for injected and WalletConnect.
+CSWallet.onChange(()=>location.reload());
+if(CSWallet.hasInjected()){
+  const inj = CSWallet.getEip1193();
+  inj.on?.("accountsChanged", ()=>location.reload());
+  inj.on?.("chainChanged", ()=>location.reload());
   // Reconnect silently if the wallet already authorized this site (no popup).
-  window.ethereum.request({method:"eth_accounts"}).then(a=>{ if(a&&a.length) connect(); }).catch(()=>{});
+  inj.request({method:"eth_accounts"}).then(a=>{ if(a&&a.length) connect(); }).catch(()=>{});
 }
+// Restore a prior WalletConnect session (loads the WC lib ONLY if a session exists).
+if(!CSWallet.forceWc() && CSWallet.hasPersistedWcSession()){
+  CSWallet.restoreSession().then(p=>{ if(p) connect({ wc:true }); }).catch(()=>{});
+}
+// Discreet WalletConnect link: shown only when an injected wallet is present AND wc is on.
+withFlags(f=>{
+  const wcOn = !f || f.wc !== false;
+  if(wcOn && CSWallet.hasInjected() && !CSWallet.forceWc()) $("#wcAlt").hidden = false;
+});
 
 /* ─────────── Era countdown (pricing() from the diamond) ───────────
    Same mapping as the burn page's pricing pill. Cached 5 min in
