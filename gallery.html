@@ -89,6 +89,25 @@
   .topnav .links a:hover,.topnav .links a[aria-current]{color:var(--gild); background:rgba(224,165,32,.12)}
   @media(max-width:520px){ .topnav .brand span{display:none} .topnav .links a{padding:6px 7px; font-size:11px; letter-spacing:.02em} }
 
+  /* era countdown — thin strip under the nav */
+  .erabar{display:block; text-align:center; text-decoration:none;
+    background:rgba(224,165,32,.08); border-bottom:1px solid rgba(224,165,32,.18);
+    color:var(--bone); font-family:"Space Mono",ui-monospace,monospace;
+    font-size:11px; letter-spacing:.06em; padding:7px 12px; line-height:1.4}
+  .erabar[hidden]{display:none}
+  .erabar b{color:var(--gild); font-weight:700}
+  .erabar .cd{color:var(--flame); font-variant-numeric:tabular-nums}
+  .erabar:hover{background:rgba(224,165,32,.14)}
+  @media(max-width:520px){ .erabar{font-size:10px; letter-spacing:.02em} }
+
+  /* live activity ticker — discreet cartela under the count */
+  .ticker{text-align:center; margin:12px auto 0; min-height:16px; padding:0 12px;
+    font-family:"Space Mono",ui-monospace,monospace; font-size:11px; letter-spacing:.06em;
+    color:rgba(224,165,32,.72)}
+  .ticker[hidden]{display:none}
+  .ticker .t-txt{display:inline-flex; align-items:center; gap:8px; transition:opacity .5s ease}
+  .ticker .t-dot{width:5px; height:5px; border-radius:50%; background:#37d67a; box-shadow:0 0 8px #37d67a; flex:none}
+
   /* ── Filter by trait — museum cartela, collapsed by default ── */
   #filterbar{ margin:0 0 22px; }
   .fpill{
@@ -191,11 +210,14 @@
   </div>
 </nav>
 
+<a class="erabar" id="erabar" href="/" hidden></a>
+
 <header>
   <div class="kicker">Liberated on Ethereum · one bonfire each</div>
   <h1>The<br />Freed</h1>
   <p class="sub">Every <b>Cubist Soul</b> freed so far. Each one exists because a holder burned its original Pikkazo canvas — the number stayed, the art came back.</p>
   <div class="count" id="count">◆ counting the freed…</div>
+  <div class="ticker" id="ticker" hidden><span class="t-txt"><span class="t-dot"></span><span class="t-msg"></span></span></div>
 </header>
 
 <main>
@@ -628,6 +650,128 @@ function renderActive(active, match){
 }
 
 load();
+
+/* ─────────── Era countdown (pricing() from the diamond) ───────────
+   Same mapping as the burn page's pricing pill. Cached 5 min in
+   sessionStorage; the clock ticks client-side. Silent on failure. */
+const PRICE_LS = "cs:pricing";
+let PRICING = null, eraTimer = null;
+const fmtEth = wei => { const s = ethers.formatEther(BigInt(wei)); return s.includes(".") ? s.replace(/\.?0+$/, "") : s; };
+const fmtDate = sec => new Date(Number(sec) * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+const ERA_NAMES = ["Era I", "Era II", "Era III", "Era IV"];
+
+function eraTierAt(now){
+  const e = now - PRICING.ss, b = PRICING.b;
+  if (e < b[0]) return 0;   // free week
+  if (e < b[1]) return 1;   // price p[0]
+  if (e < b[2]) return 2;   // price p[1]
+  return 3;                 // price p[2] — final
+}
+function eraInfo(){
+  const now = Math.floor(Date.now() / 1000);
+  const t = eraTierAt(now), { ss, b, p } = PRICING, label = ERA_NAMES[t];
+  if (t === 0) return { html: `<b>${label}</b> — free until ${fmtDate(ss + b[0])} · then Ξ${fmtEth(p[0])}`, until: ss + b[0] };
+  if (t < 3)   return { html: `<b>${label}</b> — Ξ${fmtEth(p[t - 1])} · rises to Ξ${fmtEth(p[t])} ${fmtDate(ss + b[t])}`, until: ss + b[t] };
+  return { html: `<b>${label}</b> — Ξ${fmtEth(p[2])} · final price`, until: null };
+}
+function renderEra(){
+  const el = $("#erabar"); if (!el || !PRICING) return;
+  const info = eraInfo();
+  let cd = "";
+  if (info.until != null){
+    let s = info.until - Math.floor(Date.now() / 1000); if (s < 0) s = 0;
+    const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60), sc = s % 60;
+    const pad = n => String(n).padStart(2, "0");
+    cd = ` · <span class="cd">${d > 0 ? d + "d " : ""}${pad(h)}:${pad(m)}:${pad(sc)}</span>`;
+  }
+  el.innerHTML = info.html + cd;
+  el.hidden = false;
+}
+function startEra(){ if (!PRICING) return; renderEra(); clearInterval(eraTimer); eraTimer = setInterval(renderEra, 1000); }
+async function loadEra(){
+  try {
+    const c = sessionStorage.getItem(PRICE_LS);
+    if (c) { const o = JSON.parse(c); if (Date.now() - o.t < 300000) { PRICING = o.p; startEra(); return; } }
+  } catch {}
+  try {
+    const rpc = await reliableProvider();
+    const c = new ethers.Contract(SOULS, ["function pricing() view returns (uint64,uint32,uint32,uint32,uint256,uint256,uint256)"], rpc);
+    const pr = await c.pricing();
+    PRICING = { ss: Number(pr[0]), b: [Number(pr[1]), Number(pr[2]), Number(pr[3])], p: [pr[4].toString(), pr[5].toString(), pr[6].toString()] };
+    try { sessionStorage.setItem(PRICE_LS, JSON.stringify({ t: Date.now(), p: PRICING })); } catch {}
+    startEra();
+  } catch { /* silent — bar stays hidden */ }
+}
+loadEra();
+
+/* ─────────── Live activity ticker (latest Soul mints) ───────────
+   Transfer(from=0x0) on the diamond, latest ~20, block→timestamp.
+   Cached 60s. Silent on failure; never blocks the grid. */
+const TICKER_LS = "cs:ticker";
+let TICK_ENTRIES = [], tickI = 0, tickTimer = null;
+function tickAgo(s){
+  if (s < 60) return "just now";
+  const m = Math.floor(s / 60); if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60); if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+function tickerMessages(){
+  if (!TICK_ENTRIES.length) return [];
+  const now = Math.floor(Date.now() / 1000);
+  const lastHour = TICK_ENTRIES.filter(e => now - e.ts <= 3600).length;
+  const msgs = [];
+  TICK_ENTRIES.slice(0, 12).forEach((e, i) => {
+    msgs.push(`Soul #${e.id} freed ${tickAgo(now - e.ts)}`);
+    if (i === 0 && lastHour >= 2) msgs.push(`${lastHour} souls freed in the last hour`);
+  });
+  return msgs;
+}
+function renderTick(){
+  const el = $("#ticker"); if (!el) return;
+  const msgs = tickerMessages();
+  if (!msgs.length) { el.hidden = true; return; }
+  el.hidden = false;
+  const txt = el.querySelector(".t-txt"), msg = el.querySelector(".t-msg");
+  txt.style.opacity = "0";
+  setTimeout(() => { msg.textContent = msgs[tickI % msgs.length]; txt.style.opacity = "1"; }, 300);
+  tickI++;
+}
+function startTicker(){ if (!TICK_ENTRIES.length) return; renderTick(); clearInterval(tickTimer); tickTimer = setInterval(renderTick, 6000); }
+async function loadTicker(){
+  try {
+    const c = sessionStorage.getItem(TICKER_LS);
+    if (c) { const o = JSON.parse(c); if (Date.now() - o.t < 60000) { TICK_ENTRIES = o.e; startTicker(); return; } }
+  } catch {}
+  try {
+    const rpc = await reliableProvider();
+    const latest = await rpc.getBlockNumber();
+    const from = Math.max(DEPLOY_BLOCK, latest - 45000);
+    const topic = ethers.id("Transfer(address,address,uint256)");
+    const zero = ethers.zeroPadValue("0x0000000000000000000000000000000000000000", 32);
+    const filter = { address: SOULS, topics: [topic, zero] };
+    let logs;
+    try { logs = await rpc.getLogs({ ...filter, fromBlock: from, toBlock: "latest" }); }
+    catch {
+      logs = [];
+      for (let f = from; f <= latest; f += 9000) {
+        const to = Math.min(f + 8999, latest);
+        logs = logs.concat(await rpc.getLogs({ ...filter, fromBlock: f, toBlock: to }));
+      }
+    }
+    if (!logs.length) return;
+    logs.sort((a, b) => (b.blockNumber - a.blockNumber) || (b.index - a.index));
+    const top = logs.slice(0, 20);
+    const blocks = [...new Set(top.map(l => l.blockNumber))];
+    const ts = {};
+    await Promise.all(blocks.map(async bn => { try { ts[bn] = (await rpc.getBlock(bn)).timestamp; } catch {} }));
+    TICK_ENTRIES = top.map(l => ({ id: Number(BigInt(l.topics[3])), ts: ts[l.blockNumber] }))
+                      .filter(e => e.ts).sort((a, b) => b.ts - a.ts);
+    if (!TICK_ENTRIES.length) return;
+    try { sessionStorage.setItem(TICKER_LS, JSON.stringify({ t: Date.now(), e: TICK_ENTRIES })); } catch {}
+    startTicker();
+  } catch { /* silent */ }
+}
+loadTicker();
 </script>
 </body>
 </html>
