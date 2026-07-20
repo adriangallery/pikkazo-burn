@@ -166,7 +166,12 @@ window.CSWallet = (function () {
     wc.on("session_delete", function () { fireChange("disconnect"); });
   }
 
-  // Init (or reuse) the WalletConnect provider. Mainnet only (chains:[1]).
+  // Init (or reuse) the WalletConnect provider. Mainnet as an OPTIONAL chain, not a
+  // required namespace: with `chains:[1]` (required) many mobile wallets reject the
+  // whole session proposal when they aren't already on mainnet or enforce strict
+  // namespace matching — the reported "can't connect" glitch. `optionalChains:[1]`
+  // lets the wallet approve the session, then ensureMainnet() (called by the page
+  // right after connect) switches it to Ethereum mainnet.
   async function initWc() {
     if (wc) return wc;
     await loadScript();
@@ -174,7 +179,7 @@ window.CSWallet = (function () {
     if (!Ctor) throw new Error("WalletConnect EthereumProvider unavailable");
     wc = await Ctor.init({
       projectId: WC_PROJECT_ID,
-      chains: [1],
+      optionalChains: [1],
       showQrModal: true,
       metadata: WC_META
     });
