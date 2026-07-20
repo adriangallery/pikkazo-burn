@@ -422,6 +422,13 @@ $("#wcConnect").onclick = () => connect({ wc: true });
 // flow is unchanged; WalletConnect is used when there's no injected wallet (or when
 // the holder explicitly picks the WalletConnect link / the localhost ?wcforce harness).
 async function connect(opts) {
+  // Mobile without an injected wallet: the WC deep-link handoff hangs in iOS Safari,
+  // so offer the reliable dapp-browser path FIRST via our own museum sheet (WC stays
+  // as a discreet secondary option). ?wcforce still routes straight to WC.
+  if (!(opts && opts.wc) && !CSWallet.forceWc() && CSWallet.isMobile() && !CSWallet.hasInjected()) {
+    CSWallet.openWalletSheet({ onWalletConnect: CSWallet.wcEnabled() ? () => connect({ wc: true }) : null });
+    return;
+  }
   const useWc = (opts && opts.wc) || CSWallet.forceWc() || (!CSWallet.hasInjected() && CSWallet.wcEnabled());
   try {
     let eip;

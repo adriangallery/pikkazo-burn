@@ -16,6 +16,16 @@
  *
  * Kill-switch: respects window.CS_FLAGS.wc (from /flags.json via tele.js). When
  * wc === false, WalletConnect is never offered — only the injected flow.
+ *
+ * MOBILE (no injected wallet): the WalletConnect deep-link handoff to a wallet app
+ * is flaky in iOS Safari ("Continue in MetaMask" hangs). So on mobile without an
+ * injected provider we offer FIRST the reliable path — open cubistsouls.com inside
+ * the wallet's own dapp browser (universal links), where the provider is injected
+ * and connect is instant, no QR, no handoff. WalletConnect stays as a discreet
+ * secondary option. openWalletSheet() renders that self-contained museum-cartela
+ * sheet; dappLinks() builds the universal links for the CURRENT page. These links
+ * do NOT depend on WalletConnect, so they show even when flags.wc === false, and
+ * they never load the heavy WC UMD.
  */
 window.CSWallet = (function () {
   "use strict";
@@ -36,17 +46,71 @@ window.CSWallet = (function () {
   var WC_SESSION_KEY = "wc@2:client:0.3//session";
 
   var isLocal = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+  var QS = new URLSearchParams(location.search);
   // localhost-only harness: ?wcforce=1 pretends there is NO injected wallet, so
   // "Connect Wallet" goes straight to the WalletConnect modal (QR).
-  var FORCE_WC = isLocal && new URLSearchParams(location.search).get("wcforce") === "1";
+  var FORCE_WC = isLocal && QS.get("wcforce") === "1";
+  // localhost-only harness: ?mobileforce=1 pretends this is a mobile device with
+  // NO injected wallet, so "Connect Wallet" opens the museum wallet sheet on desktop.
+  var FORCE_MOBILE = isLocal && QS.get("mobileforce") === "1";
 
   var active = null;   // the EIP-1193 provider currently in use (injected or WC)
   var wc = null;       // the WalletConnect EthereumProvider instance (once inited)
   var scriptP = null;  // memoized lazy-load promise for the UMD
   var changeCb = null; // page callback for account/chain/disconnect on the WC provider
 
-  function injected() { return FORCE_WC ? null : (window.ethereum || null); }
+  // Both localhost harnesses pretend there is no injected wallet so the wallet-less
+  // paths (WC modal / mobile sheet) can be exercised on a dev machine with an extension.
+  function injected() { return (FORCE_WC || FORCE_MOBILE) ? null : (window.ethereum || null); }
   function hasInjected() { return !!injected(); }
+
+  // Robust mobile detection. Classic mobile UAs, plus iPadOS 13+ which lies and
+  // reports as desktop "Macintosh" — caught via touch points on a Mac UA. The
+  // localhost ?mobileforce=1 harness forces it on for desktop verification.
+  function isMobile() {
+    if (FORCE_MOBILE) return true;
+    var ua = navigator.userAgent || "";
+    if (/Android|iPhone|iPod|Windows Phone|BlackBerry|BB10|Mobi/i.test(ua)) return true;
+    if (/iPad/i.test(ua)) return true;
+    // iPadOS masquerading as macOS: Mac UA + a touch screen (real Macs report 0).
+    if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return true;
+    return false;
+  }
+
+  // Build the CURRENT page's URL for the wallet dapp-browser universal links,
+  // stripping the localhost-only debug params so they never leak into the link.
+  function currentUrlForDapp() {
+    var params = new URLSearchParams(location.search);
+    params.delete("wcforce");
+    params.delete("mobileforce");
+    var qs = params.toString();
+    var tail = location.pathname + (qs ? "?" + qs : "");
+    return {
+      hostPath: location.host + tail,                 // no scheme (MetaMask format)
+      full: location.protocol + "//" + location.host + tail // full URL (Coinbase format)
+    };
+  }
+
+  // Universal links that open cubistsouls.com INSIDE a wallet's own dapp browser,
+  // where the wallet provider is injected and connect is one tap (no QR, no iOS
+  // deep-link handoff that hangs in Safari). Only wallets with a confirmed, stable
+  // universal-link format are included:
+  //   - MetaMask:  https://metamask.app.link/dapp/<host+path>  (host/path, no scheme)
+  //     src: https://docs.metamask.io/wallet/how-to/use-mobile/
+  //   - Coinbase:  https://go.cb-w.com/dapp?cb_url=<url-encoded full url>
+  //     src: https://docs.cdp.coinbase.com/coinbase-wallet/developer-guidance/mobile-dapp-integration
+  // Omitted (unconfirmed / broken for our case): Rabby (no stable HTTPS dapp-browser
+  // link), Phantom (browse deeplink has documented "page not found" issues), Trust
+  // (its iOS dapp browser was removed; link format migrated to Branch.io).
+  function dappLinks() {
+    var u = currentUrlForDapp();
+    return [
+      { id: "metamask", name: "MetaMask", mono: "M", tint: "#f6851b",
+        url: "https://metamask.app.link/dapp/" + u.hostPath },
+      { id: "coinbase", name: "Coinbase Wallet", mono: "C", tint: "#0052ff",
+        url: "https://go.cb-w.com/dapp?cb_url=" + encodeURIComponent(u.full) }
+    ];
+  }
 
   // The active provider for anything that must hit the user's wallet.
   function getEip1193() { return active || injected(); }
@@ -176,12 +240,125 @@ window.CSWallet = (function () {
     active = null;
   }
 
+  // ── Mobile wallet sheet ─────────────────────────────────────────────────────
+  // Self-contained (own inline <style>, no page CSS dependency) so both pages get
+  // an identical museum-cartela sheet. Never loads the WalletConnect UMD.
+  function ensureSheetStyles() {
+    if (document.getElementById("cs-wsheet-css")) return;
+    var css = document.createElement("style");
+    css.id = "cs-wsheet-css";
+    css.textContent = [
+      ".cs-wsheet-ov{position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;justify-content:center;",
+        "background:rgba(6,5,4,.72);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);",
+        "opacity:0;transition:opacity .2s ease;padding:0}",
+      ".cs-wsheet-ov.in{opacity:1}",
+      "@media(min-width:560px){.cs-wsheet-ov{align-items:center;padding:20px}}",
+      ".cs-wsheet{position:relative;width:100%;max-width:440px;background:#171311;color:#f3ece3;",
+        "border:1px solid #2a2320;border-top:2px solid #e0a520;",
+        "border-radius:18px 18px 0 0;padding:26px 22px calc(24px + env(safe-area-inset-bottom));",
+        "box-shadow:0 -20px 60px rgba(0,0,0,.6);transform:translateY(14px);transition:transform .24s cubic-bezier(.2,.9,.3,1.2);",
+        "font-family:'Helvetica Neue',Helvetica,Arial,sans-serif}",
+      ".cs-wsheet-ov.in .cs-wsheet{transform:translateY(0)}",
+      "@media(min-width:560px){.cs-wsheet{border-radius:18px;border-top:1px solid #2a2320;box-shadow:0 30px 80px rgba(0,0,0,.6)}}",
+      ".cs-wsheet-x{position:absolute;top:12px;right:12px;width:34px;height:34px;padding:0;border:none;",
+        "background:transparent;color:#9c8f84;font-size:24px;line-height:1;cursor:pointer;border-radius:8px}",
+      ".cs-wsheet-x:hover{color:#f3ece3;background:#2a2320}",
+      ".cs-wsheet-kicker{font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.3em;",
+        "text-transform:uppercase;color:#e0a520}",
+      ".cs-wsheet-title{margin:8px 0 6px;font-size:21px;font-weight:800;color:#f3ece3;letter-spacing:-.01em}",
+      ".cs-wsheet-copy{margin:0 0 18px;font-size:13.5px;line-height:1.5;color:#9c8f84}",
+      ".cs-wsheet-list{display:flex;flex-direction:column;gap:10px}",
+      ".cs-wsheet-btn{display:flex;align-items:center;gap:13px;text-decoration:none;",
+        "background:#2a2320;border:1px solid #3a312c;border-radius:12px;padding:13px 15px;",
+        "color:#f3ece3;transition:.15s ease}",
+      ".cs-wsheet-btn:hover,.cs-wsheet-btn:active{border-color:#e0a520;transform:translateY(-1px)}",
+      ".cs-wsheet-ico{flex:0 0 auto;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;",
+        "justify-content:center;font-weight:800;font-size:17px;color:#fff}",
+      ".cs-wsheet-name{flex:1 1 auto;font-weight:700;font-size:15px}",
+      ".cs-wsheet-arrow{flex:0 0 auto;color:#9c8f84;font-size:17px}",
+      ".cs-wsheet-wc{display:block;width:100%;margin:16px 0 0;padding:10px;background:none;border:none;",
+        "color:#9c8f84;font-size:12.5px;cursor:pointer;font-family:inherit;text-align:center;",
+        "border-top:1px solid #2a2320}",
+      ".cs-wsheet-wc:hover{color:#e0a520}"
+    ].join("");
+    (document.head || document.documentElement).appendChild(css);
+  }
+
+  var sheetEl = null, sheetKeyHandler = null;
+  function closeWalletSheet() {
+    if (!sheetEl) return;
+    var el = sheetEl; sheetEl = null;
+    el.classList.remove("in");
+    if (sheetKeyHandler) { document.removeEventListener("keydown", sheetKeyHandler); sheetKeyHandler = null; }
+    setTimeout(function () { if (el && el.parentNode) el.parentNode.removeChild(el); }, 220);
+  }
+
+  // Render the sheet. opts.onWalletConnect (fn|null): when provided, a discreet
+  // "Other wallet (WalletConnect)" link is shown that runs it (the page's WC flow).
+  // When null (wc disabled or no page handler), only the dapp-browser links show.
+  function openWalletSheet(opts) {
+    opts = opts || {};
+    ensureSheetStyles();
+    closeWalletSheet();
+    var links = dappLinks();
+
+    var ov = document.createElement("div");
+    ov.className = "cs-wsheet-ov";
+    ov.setAttribute("role", "dialog");
+    ov.setAttribute("aria-modal", "true");
+    ov.setAttribute("aria-label", "Open in your wallet");
+
+    var html =
+      '<div class="cs-wsheet">' +
+        '<button class="cs-wsheet-x" type="button" aria-label="Close">×</button>' +
+        '<div class="cs-wsheet-kicker">Cubist Souls</div>' +
+        '<h3 class="cs-wsheet-title">Open in your wallet</h3>' +
+        '<p class="cs-wsheet-copy">Opens cubistsouls.com inside your wallet’s browser, where connecting is one tap.</p>' +
+        '<div class="cs-wsheet-list">';
+    links.forEach(function (l) {
+      html +=
+        '<a class="cs-wsheet-btn" data-wid="' + l.id + '" href="' + l.url + '" rel="noopener">' +
+          '<span class="cs-wsheet-ico" style="background:' + l.tint + '">' + l.mono + '</span>' +
+          '<span class="cs-wsheet-name">' + l.name + '</span>' +
+          '<span class="cs-wsheet-arrow">→</span>' +
+        '</a>';
+    });
+    html += '</div>';
+    if (typeof opts.onWalletConnect === "function") {
+      html += '<button class="cs-wsheet-wc" type="button">Other wallet (WalletConnect) →</button>';
+    }
+    html += '</div>';
+    ov.innerHTML = html;
+    document.body.appendChild(ov);
+    sheetEl = ov;
+
+    // animate in
+    requestAnimationFrame(function () { ov.classList.add("in"); });
+
+    ov.querySelector(".cs-wsheet-x").onclick = closeWalletSheet;
+    ov.onclick = function (e) { if (e.target === ov) closeWalletSheet(); };
+    // dapp links navigate the app open on tap; close the sheet behind them.
+    ov.querySelectorAll(".cs-wsheet-btn").forEach(function (a) {
+      a.addEventListener("click", function () { setTimeout(closeWalletSheet, 400); });
+    });
+    var wcBtn = ov.querySelector(".cs-wsheet-wc");
+    if (wcBtn) wcBtn.onclick = function () { closeWalletSheet(); opts.onWalletConnect(); };
+    sheetKeyHandler = function (e) { if (e.key === "Escape") closeWalletSheet(); };
+    document.addEventListener("keydown", sheetKeyHandler);
+    return ov;
+  }
+
   return {
     getEip1193: getEip1193,
     hasInjected: hasInjected,
     wcEnabled: wcEnabled,
     forceWc: function () { return FORCE_WC; },
+    forceMobile: function () { return FORCE_MOBILE; },
+    isMobile: isMobile,
     isLocal: function () { return isLocal; },
+    dappLinks: dappLinks,
+    openWalletSheet: openWalletSheet,
+    closeWalletSheet: closeWalletSheet,
     connectInjected: connectInjected,
     connectWalletConnect: connectWalletConnect,
     restoreSession: restoreSession,
